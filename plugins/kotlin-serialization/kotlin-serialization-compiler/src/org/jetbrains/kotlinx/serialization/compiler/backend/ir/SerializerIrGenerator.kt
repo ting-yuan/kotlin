@@ -34,7 +34,6 @@ import org.jetbrains.kotlinx.serialization.compiler.backend.common.getSerialType
 import org.jetbrains.kotlinx.serialization.compiler.resolve.*
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.DECODER_CLASS
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.ENCODER_CLASS
-import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.GENERATED_SERIALIZER_CLASS
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.KSERIALIZER_NAME
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.SERIAL_DESCRIPTOR_CLASS_IMPL
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.STRUCTURE_DECODER_CLASS
@@ -80,11 +79,11 @@ class SerializerIrGenerator(val irClass: IrClass, override val compilerContext: 
             compilerContext.localSymbolTable.withScope(initIrBody.descriptor) {
                 initIrBody.body = compilerContext.createIrBuilder(initIrBody.symbol).irBlockBody {
                     val localDesc = irTemporary(
-                        irCall(
-                            serialClassDescImplCtor,
-                            type = serialClassDescImplCtor.owner.returnType
-                        ).mapValueParameters { irString(serialName) },
-                        nameHint = "serialDesc"
+                            irInvoke(null, serialClassDescImplCtor,
+                                    irString(serialName), irGet(thisAsReceiverParameter),
+                                    typeHint = serialClassDescImplCtor.owner.returnType
+                            ),
+                            nameHint = "serialDesc"
                     )
 
                     fun addFieldCall(fieldName: String) =
