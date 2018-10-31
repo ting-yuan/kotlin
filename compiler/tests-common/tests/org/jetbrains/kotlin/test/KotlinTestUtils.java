@@ -112,6 +112,8 @@ public class KotlinTestUtils {
 
     private static final List<File> filesToDelete = new ArrayList<>();
 
+    private static final String ls = System.lineSeparator();
+
     /**
      * Syntax:
      *
@@ -124,10 +126,10 @@ public class KotlinTestUtils {
     private static final String MODULE_DELIMITER = ",\\s*";
 
     private static final Pattern FILE_OR_MODULE_PATTERN = Pattern.compile(
-            "(?://\\s*MODULE:\\s*([^()\\n]+)(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*)?" +
+            "(?://\\s*MODULE:\\s*([^()" + Pattern.quote(ls) + "]+)(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*)?" +
             "//\\s*FILE:\\s*(.*)$", Pattern.MULTILINE);
     private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*!([\\w_]+)(:\\s*(.*)$)?", Pattern.MULTILINE);
-    private static final Pattern LINE_SEPARATOR_PATTERN = Pattern.compile("\\r\\n|\\r|\\n");
+    private static final Pattern LINE_SEPARATOR_PATTERN = Pattern.compile(Pattern.quote(ls));
 
     public static final BindingTrace DUMMY_TRACE = new BindingTrace() {
         @NotNull
@@ -489,7 +491,7 @@ public class KotlinTestUtils {
             String messageWithFullPath = file.getAbsolutePath() + " (No such file or directory)";
             throw new IOException(
                     "Ensure you have your 'Working Directory' configured correctly as the root " +
-                    "Kotlin project directory in your test configuration\n\t" +
+                    "Kotlin project directory in your test configuration" + ls + "\t" +
                     messageWithFullPath,
                     fileNotFoundException);
         }
@@ -823,7 +825,7 @@ public class KotlinTestUtils {
             }
 
             lastLineOffset = matcher.end();
-            prefix.append('\n');
+            prefix.append(ls);
         }
 
         while (lastLineOffset++ < start) {
@@ -870,7 +872,7 @@ public class KotlinTestUtils {
             @NotNull
             @Override
             public String create(@NotNull String fileName, @NotNull String text, @NotNull Map<String, String> directives) {
-                int firstLineEnd = text.indexOf('\n');
+                int firstLineEnd = text.indexOf(ls);
                 return StringUtil.trimTrailing(text.substring(firstLineEnd + 1));
             }
         }, "");
@@ -899,7 +901,7 @@ public class KotlinTestUtils {
         Collections.reverse(resultLines);
         StringBuilder result = new StringBuilder();
         for (CharSequence line : resultLines) {
-            result.append(line).append("\n");
+            result.append(line).append(ls);
         }
         result.delete(result.length() - 1, result.length());
         return result.toString();
@@ -1008,13 +1010,13 @@ public class KotlinTestUtils {
             if (diagnostic.getKind() != javax.tools.Diagnostic.Kind.ERROR) continue;
 
             if (humanReadable) {
-                builder.append(diagnostic).append("\n");
+                builder.append(diagnostic).append(ls);
             }
             else {
                 builder.append(new File(diagnostic.getSource().toUri()).getName()).append(":")
                         .append(diagnostic.getLineNumber()).append(":")
                         .append(diagnostic.getColumnNumber()).append(":")
-                        .append(diagnostic.getCode()).append("\n");
+                        .append(diagnostic.getCode()).append(ls);
             }
         }
         return builder.toString();
@@ -1061,14 +1063,14 @@ public class KotlinTestUtils {
 
             if (!isIgnored && AUTOMATICALLY_MUTE_FAILED_TESTS) {
                 String text = doLoadFile(testDataFile);
-                String directive = InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX + targetBackend.name() + "\n";
+                String directive = InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX + targetBackend.name() + ls;
 
                 String newText;
                 if (text.startsWith("// !")) {
                     StringBuilder prefixBuilder = new StringBuilder();
                     int l = 0;
                     while (text.startsWith("// !", l)) {
-                        int r = text.indexOf("\n", l) + 1;
+                        int r = text.indexOf(ls, l) + 1;
                         if (r <= 0) r = text.length();
                         prefixBuilder.append(text.substring(l, r));
                         l = r;
@@ -1101,7 +1103,7 @@ public class KotlinTestUtils {
             if (AUTOMATICALLY_UNMUTE_PASSED_TESTS) {
                 String text = doLoadFile(testDataFile);
                 String directive = InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX + targetBackend.name();
-                String newText = Pattern.compile("^" + directive + "\n", Pattern.MULTILINE).matcher(text).replaceAll("");
+                String newText = Pattern.compile("^" + directive + Pattern.quote(ls), Pattern.MULTILINE).matcher(text).replaceAll("");
 
                 if (!newText.equals(text)) {
                     System.err.println("\"" + directive + "\" was removed from \"" + testDataFile + "\"");
@@ -1185,7 +1187,7 @@ public class KotlinTestUtils {
         if (path != null) {
             String relativePath = nameToCompare(path);
             if (!filePaths.contains(relativePath)) {
-                Assert.fail("Test data file missing from the generated test class: " + file + "\n" + PLEASE_REGENERATE_TESTS);
+                Assert.fail("Test data file missing from the generated test class: " + file + ls + PLEASE_REGENERATE_TESTS);
             }
         }
     }
@@ -1236,7 +1238,7 @@ public class KotlinTestUtils {
                 return;
             }
         }
-        Assert.fail("Test data directory missing from the generated test class: " + testDataDir + "\n" + PLEASE_REGENERATE_TESTS);
+        Assert.fail("Test data directory missing from the generated test class: " + testDataDir + ls + PLEASE_REGENERATE_TESTS);
     }
 
     @NotNull
