@@ -72,12 +72,19 @@ dependencies {
     testRuntime(project(":kotlin-daemon-client-new"))
     testRuntime(project(":compiler:daemon")) // +
     testRuntime(project(":compiler:daemon-common-new")) // +
-    testRuntime(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) { isTransitive = false }
+    testRuntime(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) {
+        isTransitive = false
+    }
     testRuntime(commonDep("io.ktor", "ktor-network")) {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-common")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-jdk8")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-common")
+
     }
     testRuntime(androidDxJar())
     testRuntime(files(toolsJar()))
