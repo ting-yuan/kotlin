@@ -28,6 +28,10 @@ interface KotlinCompilation<out T : KotlinCommonToolOptions> : Named, HasAttribu
 
     val kotlinSourceSets: Set<KotlinSourceSet>
 
+    val defaultSourceSet: KotlinSourceSet
+
+    fun defaultSourceSet(configure: KotlinSourceSet.() -> Unit)
+
     val compileDependencyConfigurationName: String
 
     var compileDependencyFiles: FileCollection
