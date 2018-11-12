@@ -11,6 +11,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
@@ -90,8 +91,10 @@ internal fun applyLanguageSettingsToKotlinTask(
     languageSettingsBuilder: LanguageSettingsBuilder,
     kotlinTask: org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>
 ) = with(kotlinTask.kotlinOptions) {
-    languageVersion = languageVersion ?: languageSettingsBuilder.languageVersion
-    apiVersion = apiVersion ?: languageSettingsBuilder.apiVersion
+    if (this is KotlinCommonOptions) {
+        languageVersion = languageVersion ?: languageSettingsBuilder.languageVersion
+        apiVersion = apiVersion ?: languageSettingsBuilder.apiVersion
+    }
 
     if (languageSettingsBuilder.progressiveMode) {
         freeCompilerArgs += "-progressive"

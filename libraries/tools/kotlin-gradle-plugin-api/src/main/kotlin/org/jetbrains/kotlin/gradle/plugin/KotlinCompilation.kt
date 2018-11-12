@@ -9,6 +9,8 @@ import org.gradle.api.Named
 import org.gradle.api.attributes.HasAttributes
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import java.io.File
 
 interface KotlinCompilationOutput {
@@ -19,7 +21,7 @@ interface KotlinCompilationOutput {
     val allOutputs: FileCollection
 }
 
-interface KotlinCompilation: Named, HasAttributes, HasKotlinDependencies {
+interface KotlinCompilation<out T : KotlinCommonToolOptions> : Named, HasAttributes, HasKotlinDependencies {
     val target: KotlinTarget
 
     val compilationName: String
@@ -36,6 +38,12 @@ interface KotlinCompilation: Named, HasAttributes, HasKotlinDependencies {
 
     val compileKotlinTaskName: String
 
+    val compileKotlinTask: KotlinCompile<T>
+
+    val kotlinOptions: T
+
+    fun kotlinOptions(configure: T.() -> Unit)
+
     val compileAllTaskName: String
 
     companion object {
@@ -51,7 +59,7 @@ interface KotlinCompilation: Named, HasAttributes, HasKotlinDependencies {
         get() = super.relatedConfigurationNames + compileDependencyConfigurationName
 }
 
-interface KotlinCompilationToRunnableFiles : KotlinCompilation {
+interface KotlinCompilationToRunnableFiles<T : KotlinCommonToolOptions> : KotlinCompilation<T> {
     val runtimeDependencyConfigurationName: String
 
     var runtimeDependencyFiles: FileCollection
@@ -60,6 +68,6 @@ interface KotlinCompilationToRunnableFiles : KotlinCompilation {
         get() = super.relatedConfigurationNames + runtimeDependencyConfigurationName
 }
 
-interface KotlinCompilationWithResources : KotlinCompilation {
+interface KotlinCompilationWithResources<T : KotlinCommonToolOptions> : KotlinCompilation<T> {
     val processResourcesTaskName: String
 }
