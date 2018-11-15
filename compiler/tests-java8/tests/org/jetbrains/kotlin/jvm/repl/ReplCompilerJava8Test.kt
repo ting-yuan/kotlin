@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.jvm.repl
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -111,8 +112,8 @@ class ReplCompilerJava8Test : KtUsefulTestCase() {
     private fun runTest(configuration: CompilerConfiguration): ReplCompileResult {
         val collector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false)
         val replCompiler = GenericReplCompiler(testRootDisposable, StandardScriptDefinition, configuration, collector)
-        val state = replCompiler.createState()
+        val state = runBlocking { replCompiler.createState() }
 
-        return replCompiler.compile(state, ReplCodeLine(0, 0, script))
+        return runBlocking { replCompiler.compile(state, ReplCodeLine(0, 0, script)) }
     }
 }

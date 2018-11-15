@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the license/LICENSE.txt file.
+ */
+
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 description = "Kotlin Daemon Client New"
@@ -28,7 +33,7 @@ dependencies {
     compileOnly(project(":compiler:daemon-common-new"))
     compileOnly(project(":kotlin-reflect-api"))
     compileOnly(project(":kotlin-daemon-client"))
-    embeddedComponents(project(":kotlin-daemon-client"))
+    embeddedComponents(project(":kotlin-daemon-client")) { isTransitive = false }
     compileOnly(project(":js:js.frontend"))
     compileOnly(commonDep("net.rubygrapefruit", "native-platform"))
     compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }

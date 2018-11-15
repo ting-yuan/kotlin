@@ -40,16 +40,6 @@ internal class JpsCompilerServicesFacadeImpl(
     env.services[IncrementalDataProvider::class.java],
     port
 ), JpsCompilerServicesFacade {
-        private val env: JpsCompilerEnvironment,
-        port: Int = SOCKET_ANY_FREE_PORT
-) : CompilerCallbackServicesFacadeServer(env.services.get(IncrementalCompilationComponents::class.java),
-                                         env.services.get(LookupTracker::class.java),
-                                         env.services.get(CompilationCanceledStatus::class.java),
-                                         env.services[ExpectActualTracker::class.java],
-                                         env.services[IncrementalResultsConsumer::class.java],
-                                         env.services[IncrementalDataProvider::class.java],
-                                         port),
-    JpsCompilerServicesFacade {
 
     override fun report(category: Int, severity: Int, message: String?, attachment: Serializable?) {
         env.messageCollector.reportFromDaemon(

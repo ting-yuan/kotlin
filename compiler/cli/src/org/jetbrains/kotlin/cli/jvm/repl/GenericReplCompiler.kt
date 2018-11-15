@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
+import org.jetbrains.kotlin.cli.common.repl.experimental.ReplCompiler
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.CompilationErrorHandler
@@ -56,11 +57,11 @@ open class GenericReplCompiler(
 
     private val checker = GenericReplChecker(disposable, scriptDefinition, compilerConfiguration, messageCollector)
 
-    override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = GenericReplCompilerState(checker.environment, lock)
+    override suspend fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = GenericReplCompilerState(checker.environment, lock)
 
-    override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult = checker.check(state, codeLine)
+    override suspend fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult = checker.check(state, codeLine)
 
-    override fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult {
+    override suspend fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult {
         state.lock.write {
             val compilerState = state.asState(GenericReplCompilerState::class.java)
 

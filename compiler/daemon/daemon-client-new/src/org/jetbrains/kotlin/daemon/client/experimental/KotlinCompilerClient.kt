@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
  * that can be found in the license/LICENSE.txt file.
  */
 
@@ -33,6 +33,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import kotlin.concurrent.thread
+import org.jetbrains.kotlin.daemon.client.launchProcessWithFallback
 
 
 class KotlinCompilerClient : KotlinCompilerDaemonClient {
@@ -49,14 +50,14 @@ class KotlinCompilerClient : KotlinCompilerDaemonClient {
     private val log = Logger.getLogger("KotlinCompilerClient")
     private fun String.info(msg: String) = {}()//log.info("[$this] : $msg")
 
-    fun getOrCreateClientFlagFile(daemonOptions: DaemonOptions): File =
+    override fun getOrCreateClientFlagFile(daemonOptions: DaemonOptions): File =
     // for jps property is passed from IDEA to JPS in KotlinBuildProcessParametersProvider
         System.getProperty(COMPILE_DAEMON_CLIENT_ALIVE_PATH_PROPERTY)
             ?.let(String::trimQuotes)
             ?.takeUnless(String::isBlank)
             ?.let(::File)
             ?.takeIf(File::exists)
-                ?: makeAutodeletingFlagFile(baseDir = File(daemonOptions.runFilesPathOrDefault))
+            ?: makeAutodeletingFlagFile(baseDir = File(daemonOptions.runFilesPathOrDefault))
 
     override suspend fun connectToCompileService(
         compilerId: CompilerId,
@@ -477,7 +478,7 @@ class KotlinCompilerClient : KotlinCompilerDaemonClient {
                 Pair(it.daemon, optsCopy.updateMemoryUpperBounds(it.jvmOptions))
             }
         // else combine all options from running daemon to get fattest option for a new daemon to runServer
-                ?: Pair(null, aliveWithMetadata.fold(optsCopy, { opts, d -> opts.updateMemoryUpperBounds(d.jvmOptions) }))
+            ?: Pair(null, aliveWithMetadata.fold(optsCopy, { opts, d -> opts.updateMemoryUpperBounds(d.jvmOptions) }))
     }
 
 

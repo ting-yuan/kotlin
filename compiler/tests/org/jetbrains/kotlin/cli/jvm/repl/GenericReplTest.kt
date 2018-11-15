@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
@@ -44,11 +45,11 @@ class GenericReplTest : KtUsefulTestCase() {
         TestRepl().use { repl ->
             val state = repl.createState()
 
-            val res1 = repl.replCompiler.check(state, ReplCodeLine(0, 0, "val x ="))
+            val res1 = runBlocking { repl.replCompiler.check(state, ReplCodeLine(0, 0, "val x =")) }
             TestCase.assertTrue("Unexpected check results: $res1", res1 is ReplCheckResult.Incomplete)
 
             val codeLine0 = ReplCodeLine(0, 0, "val l1 = listOf(1 + 2)\nl1.first()")
-            val res2 = repl.replCompiler.compile(state, codeLine0)
+            val res2 = runBlocking { repl.replCompiler.compile(state, codeLine0) }
             val res2c = res2 as? ReplCompileResult.CompiledClasses
             TestCase.assertNotNull("Unexpected compile result: $res2", res2c)
 
@@ -58,7 +59,7 @@ class GenericReplTest : KtUsefulTestCase() {
             TestCase.assertEquals(3, res21e!!.value)
 
             val codeLine1 = ReplCodeLine(1, 0, "val x = 5")
-            val res3 = repl.replCompiler.compile(state, codeLine1)
+            val res3 = runBlocking { repl.replCompiler.compile(state, codeLine1) }
             val res3c = res3 as? ReplCompileResult.CompiledClasses
             TestCase.assertNotNull("Unexpected compile result: $res3", res3c)
 
@@ -67,7 +68,7 @@ class GenericReplTest : KtUsefulTestCase() {
             TestCase.assertNotNull("Unexpected eval result: $res31", res31e)
 
             val codeLine2 = ReplCodeLine(2, 0, "x + 2")
-            val res4 = repl.replCompiler.compile(state, codeLine2)
+            val res4 = runBlocking { repl.replCompiler.compile(state, codeLine2) }
             val res4c = res4 as? ReplCompileResult.CompiledClasses
             TestCase.assertNotNull("Unexpected compile result: $res4", res4c)
 
@@ -96,7 +97,7 @@ class GenericReplTest : KtUsefulTestCase() {
             val state = repl.createState()
 
             val codeLine0 = ReplCodeLine(0, 0, "val l1 = 1\r\nl1\r\n")
-            val res0 = repl.replCompiler.check(state, codeLine0)
+            val res0 = runBlocking { repl.replCompiler.check(state, codeLine0) }
             val res0c = res0 as? ReplCheckResult.Ok
             TestCase.assertNotNull("Unexpected compile result: $res0", res0c)
         }
@@ -107,7 +108,7 @@ class GenericReplTest : KtUsefulTestCase() {
             val state = repl.createState()
 
             val codeLine1 = repl.nextCodeLine("package mypackage\n\nval x = 1\nx+2")
-            val res1 = repl.replCompiler.compile(state, codeLine1)
+            val res1 = runBlocking { repl.replCompiler.compile(state, codeLine1) }
             val res1c = res1 as? ReplCompileResult.CompiledClasses
             TestCase.assertNotNull("Unexpected compile result: $res1", res1c)
 
@@ -117,7 +118,7 @@ class GenericReplTest : KtUsefulTestCase() {
             TestCase.assertEquals(3, res11e!!.value)
 
             val codeLine2 = repl.nextCodeLine("x+4")
-            val res2 = repl.replCompiler.compile(state, codeLine2)
+            val res2 = runBlocking { repl.replCompiler.compile(state, codeLine2) }
             val res2c = res2 as? ReplCompileResult.CompiledClasses
             TestCase.assertNotNull("Unexpected compile result: $res2", res2c)
 
@@ -210,8 +211,11 @@ internal class TestRepl(
         GenericReplEvaluator(baseClasspath, null, emptyScriptArgs, repeatingMode)
     }
 
-    fun createState(lock: ReentrantReadWriteLock = ReentrantReadWriteLock()): IReplStageState<*> =
-            AggregatedReplStageState(replCompiler.createState(lock), compiledEvaluator.createState(lock), lock)
+    fun createState(lock: ReentrantReadWriteLock = ReentrantReadWriteLock()): IReplStageState<*> {
+        val irsT1 = runBlocking { replCompiler.createState(lock) }
+        val irsT2 = compiledEvaluator.createState(lock)
+        return AggregatedReplStageState(irsT1, irsT2, lock)
+    }
 
     override fun close() {
         Disposer.dispose(disposable)
@@ -221,7 +225,7 @@ internal class TestRepl(
 
 private fun TestRepl.compileAndEval(state: IReplStageState<*>, codeLine: ReplCodeLine): Pair<ReplCompileResult, ReplEvalResult?> {
 
-    val compRes = replCompiler.compile(state, codeLine)
+    val compRes = runBlocking { replCompiler.compile(state, codeLine) }
 
     val evalRes = (compRes as? ReplCompileResult.CompiledClasses)?.let {
 

@@ -16,28 +16,40 @@
 
 package org.jetbrains.kotlin.cli.common.repl
 
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.cli.common.repl.experimental.ReplCompiler
 import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
-class GenericReplCompilingEvaluator(val compiler: ReplCompiler,
-                                    baseClasspath: Iterable<File>,
-                                    baseClassloader: ClassLoader? = Thread.currentThread().contextClassLoader,
-                                    private val fallbackScriptArgs: ScriptArgsWithTypes? = null,
-                                    repeatingMode: ReplRepeatingMode = ReplRepeatingMode.REPEAT_ONLY_MOST_RECENT
+class GenericReplCompilingEvaluator(
+    val compiler: ReplCompiler,
+    baseClasspath: Iterable<File>,
+    baseClassloader: ClassLoader? = Thread.currentThread().contextClassLoader,
+    private val fallbackScriptArgs: ScriptArgsWithTypes? = null,
+    repeatingMode: ReplRepeatingMode = ReplRepeatingMode.REPEAT_ONLY_MOST_RECENT
 ) : ReplFullEvaluator {
     private val evaluator = GenericReplEvaluator(baseClasspath, baseClassloader, fallbackScriptArgs, repeatingMode)
 
-    override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = AggregatedReplStageState(compiler.createState(lock), evaluator.createState(lock), lock)
+    override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> {
+        val irsT1 = runBlocking { compiler.createState(lock) }
+        val irsT2 = evaluator.createState(lock)
+        return AggregatedReplStageState(irsT1, irsT2, lock)
+    }
 
-    override fun compileAndEval(state: IReplStageState<*>, codeLine: ReplCodeLine, scriptArgs: ScriptArgsWithTypes?, invokeWrapper: InvokeWrapper?): ReplEvalResult {
+    override fun compileAndEval(
+        state: IReplStageState<*>,
+        codeLine: ReplCodeLine,
+        scriptArgs: ScriptArgsWithTypes?,
+        invokeWrapper: InvokeWrapper?
+    ): ReplEvalResult {
         if (codeLine.code.trim().isEmpty()) {
             return ReplEvalResult.UnitResult()
         }
 
         return state.lock.write {
             val aggregatedState = state.asState(AggregatedReplStageState::class.java)
-            val compiled = compiler.compile(state, codeLine)
+            val compiled = runBlocking { compiler.compile(state, codeLine) }
             when (compiled) {
                 is ReplCompileResult.Error -> {
                     aggregatedState.apply {
@@ -74,31 +86,52 @@ class GenericReplCompilingEvaluator(val compiler: ReplCompiler,
         }
     }
 
-    override fun eval(state: IReplStageState<*>, compileResult: ReplCompileResult.CompiledClasses, scriptArgs: ScriptArgsWithTypes?, invokeWrapper: InvokeWrapper?): ReplEvalResult =
-            evaluator.eval(state, compileResult, scriptArgs, invokeWrapper)
+    override fun eval(
+        state: IReplStageState<*>,
+        compileResult: ReplCompileResult.CompiledClasses,
+        scriptArgs: ScriptArgsWithTypes?,
+        invokeWrapper: InvokeWrapper?
+    ): ReplEvalResult =
+        evaluator.eval(state, compileResult, scriptArgs, invokeWrapper)
 
-    override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult = compiler.check(state, codeLine)
+    override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult = runBlocking {
+        compiler.check(state, codeLine)
+    }
 
-    override fun compileToEvaluable(state: IReplStageState<*>, codeLine: ReplCodeLine, defaultScriptArgs: ScriptArgsWithTypes?): Pair<ReplCompileResult, Evaluable?> {
-        val compiled = compiler.compile(state, codeLine)
+    override fun compileToEvaluable(
+        state: IReplStageState<*>,
+        codeLine: ReplCodeLine,
+        defaultScriptArgs: ScriptArgsWithTypes?
+    ): Pair<ReplCompileResult, Evaluable?> {
+        val compiled = runBlocking { compiler.compile(state, codeLine) }
         return when (compiled) {
             // TODO: seems usafe when delayed evaluation may happen after some more compileAndEval calls on the same state; check and fix or protect
-            is ReplCompileResult.CompiledClasses -> Pair(compiled, DelayedEvaluation(state, compiled, evaluator, defaultScriptArgs ?: fallbackScriptArgs))
+            is ReplCompileResult.CompiledClasses -> Pair(
+                compiled,
+                DelayedEvaluation(
+                    state,
+                    compiled,
+                    evaluator,
+                    defaultScriptArgs ?: fallbackScriptArgs
+                )
+            )
             else -> Pair(compiled, null)
         }
     }
 
-    class DelayedEvaluation(private val state: IReplStageState<*>,
-                            override val compiledCode: ReplCompileResult.CompiledClasses,
-                            private val evaluator: ReplEvaluator,
-                            private val defaultScriptArgs: ScriptArgsWithTypes?) : Evaluable {
+    class DelayedEvaluation(
+        private val state: IReplStageState<*>,
+        override val compiledCode: ReplCompileResult.CompiledClasses,
+        private val evaluator: ReplEvaluator,
+        private val defaultScriptArgs: ScriptArgsWithTypes?
+    ) : Evaluable {
         override fun eval(scriptArgs: ScriptArgsWithTypes?, invokeWrapper: InvokeWrapper?): ReplEvalResult =
-                evaluator.eval(state, compiledCode, scriptArgs ?: defaultScriptArgs, invokeWrapper)
+            evaluator.eval(state, compiledCode, scriptArgs ?: defaultScriptArgs, invokeWrapper)
     }
 }
 
 private fun AggregatedReplStageState<*, *>.adjustHistories(): Iterable<ILineId>? =
-        state2.history.peek()?.let {
-            state1.history.resetTo(it.id)
-        }
+    state2.history.peek()?.let {
+        state1.history.resetTo(it.id)
+    }
         ?: state1.history.reset()

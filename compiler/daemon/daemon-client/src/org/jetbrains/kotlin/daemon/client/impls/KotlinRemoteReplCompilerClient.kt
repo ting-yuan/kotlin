@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
  * that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.daemon.client.impls
 
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
+import org.jetbrains.kotlin.cli.common.repl.experimental.ReplCompiler
 import org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServer
 import org.jetbrains.kotlin.daemon.client.RemoteReplCompilerState
 import org.jetbrains.kotlin.daemon.common.*
@@ -59,12 +60,12 @@ open class KotlinRemoteReplCompilerClientImpl(
         }
     }
 
-    override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> =
+    override suspend fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> =
         RemoteReplCompilerState(compileService.replCreateState(sessionId).get(), lock)
 
-    override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult =
+    override suspend fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult =
         compileService.replCheck(sessionId, state.asState(RemoteReplCompilerState::class.java).replStateFacade.getId(), codeLine).get()
 
-    override fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult =
+    override suspend fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult =
         compileService.replCompile(sessionId, state.asState(RemoteReplCompilerState::class.java).replStateFacade.getId(), codeLine).get()
 }

@@ -15,7 +15,7 @@ plugins {
 // You can run Gradle with "-Pkotlin.build.proguard=true" to enable ProGuard run on kotlin-compiler.jar (on TeamCity, ProGuard always runs)
 val shrink =
     findProperty("kotlin.build.proguard")?.toString()?.toBoolean()
-    ?: hasProperty("teamcity")
+        ?: hasProperty("teamcity")
 
 val compilerManifestClassPath = "kotlin-stdlib.jar kotlin-reflect.jar kotlin-script-runtime.jar"
 
@@ -44,6 +44,7 @@ val compilerModules: Array<String> by rootProject.extra
 compilerModules.forEach { evaluationDependsOn(it) }
 
 val compiledModulesSources = compilerModules.map {
+    println(it)
     project(it).mainSourceSet.allSource
 }
 
@@ -70,6 +71,9 @@ dependencies {
     }
 
     fatJarContents(project(":core:builtins", configuration = "builtins"))
+    fatJarContents(project(":kotlin-daemon-client-new")) {
+        isTransitive = false
+    }
     fatJarContents(commonDep("javax.inject"))
     fatJarContents(commonDep("org.jline", "jline"))
     fatJarContents(commonDep("org.fusesource.jansi", "jansi"))

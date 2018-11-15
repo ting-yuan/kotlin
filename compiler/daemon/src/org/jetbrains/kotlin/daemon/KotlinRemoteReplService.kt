@@ -17,10 +17,12 @@
 package org.jetbrains.kotlin.daemon
 
 import com.intellij.openapi.Disposable
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.messages.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.INFO
 import org.jetbrains.kotlin.cli.common.repl.*
+import org.jetbrains.kotlin.cli.common.repl.experimental.ReplCompiler
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompilerState
@@ -92,12 +94,12 @@ open class KotlinJvmReplService(
     protected val defaultStateFacade: RemoteReplStateFacadeServer by lazy { createRemoteState() }
 
     override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> =
-        replCompiler?.createState(lock) ?: throw IllegalStateException("repl compiler is not initialized properly")
+        runBlocking { replCompiler?.createState(lock) ?: throw IllegalStateException("repl compiler is not initialized properly") }
 
     override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult {
         operationsTracer?.before("check")
         try {
-            return replCompiler?.check(state, codeLine) ?: ReplCheckResult.Error("Initialization error")
+            return runBlocking { replCompiler?.check(state, codeLine) ?: ReplCheckResult.Error("Initialization error") }
         } finally {
             operationsTracer?.after("check")
         }
@@ -106,7 +108,7 @@ open class KotlinJvmReplService(
     override fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult {
         operationsTracer?.before("compile")
         try {
-            return replCompiler?.compile(state, codeLine) ?: ReplCompileResult.Error("Initialization error")
+            return runBlocking { replCompiler?.compile(state, codeLine) ?: ReplCompileResult.Error("Initialization error") }
         } finally {
             operationsTracer?.after("compile")
         }

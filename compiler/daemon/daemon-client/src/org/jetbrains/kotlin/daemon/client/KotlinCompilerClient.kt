@@ -25,6 +25,8 @@ class KotlinCompilerClient : KotlinCompilerDaemonClient {
 
     private val oldKotlinCompilerClient = org.jetbrains.kotlin.daemon.client.impls.KotlinCompilerClientImpl
 
+    override fun getOrCreateClientFlagFile(daemonOptions: DaemonOptions) = oldKotlinCompilerClient.getOrCreateClientFlagFile(daemonOptions)
+
     override suspend fun connectToCompileService(
         compilerId: CompilerId,
         daemonJVMOptions: DaemonJVMOptions,

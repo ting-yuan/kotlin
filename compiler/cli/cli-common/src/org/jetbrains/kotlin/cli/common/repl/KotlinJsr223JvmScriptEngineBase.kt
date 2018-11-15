@@ -16,9 +16,11 @@
 
 package org.jetbrains.kotlin.cli.common.repl
 
+import kotlinx.coroutines.runBlocking
 import java.io.Reader
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.script.*
+import org.jetbrains.kotlin.cli.common.repl.experimental.ReplCompiler
 
 const val KOTLIN_SCRIPT_STATE_BINDINGS_KEY = "kotlin.script.state"
 const val KOTLIN_SCRIPT_ENGINE_BINDINGS_KEY = "kotlin.script.engine"
@@ -46,12 +48,12 @@ abstract class KotlinJsr223JvmScriptEngineBase(protected val myFactory: ScriptEn
     protected abstract fun createState(lock: ReentrantReadWriteLock = ReentrantReadWriteLock()): IReplStageState<*>
 
     protected fun getCurrentState(context: ScriptContext) =
-            context.getBindings(ScriptContext.ENGINE_SCOPE)
-                    .getOrPut(KOTLIN_SCRIPT_STATE_BINDINGS_KEY, {
-                        // TODO: check why createBinding is not called on creating default context, so the engine is not set
-                        context.getBindings(ScriptContext.ENGINE_SCOPE).put(KOTLIN_SCRIPT_ENGINE_BINDINGS_KEY, this@KotlinJsr223JvmScriptEngineBase)
-                        createState()
-                    }) as IReplStageState<*>
+        context.getBindings(ScriptContext.ENGINE_SCOPE)
+            .getOrPut(KOTLIN_SCRIPT_STATE_BINDINGS_KEY, {
+                // TODO: check why createBinding is not called on creating default context, so the engine is not set
+                context.getBindings(ScriptContext.ENGINE_SCOPE).put(KOTLIN_SCRIPT_ENGINE_BINDINGS_KEY, this@KotlinJsr223JvmScriptEngineBase)
+                createState()
+            }) as IReplStageState<*>
 
     open fun overrideScriptArgs(context: ScriptContext): ScriptArgsWithTypes? = null
 
@@ -72,7 +74,7 @@ abstract class KotlinJsr223JvmScriptEngineBase(protected val myFactory: ScriptEn
         val codeLine = nextCodeLine(context, script)
         val state = getCurrentState(context)
 
-        val result = replCompiler.compile(state, codeLine)
+        val result = runBlocking { replCompiler.compile(state, codeLine) }
         val compiled = when (result) {
             is ReplCompileResult.Error -> throw ScriptException("Error${result.locationString()}: ${result.message}")
             is ReplCompileResult.Incomplete -> throw ScriptException("error: incomplete code")
@@ -106,5 +108,5 @@ abstract class KotlinJsr223JvmScriptEngineBase(protected val myFactory: ScriptEn
 }
 
 private fun ReplCompileResult.Error.locationString() =
-        if (location == null) ""
-        else " at ${location.line}:${location.column}"
+    if (location == null) ""
+    else " at ${location.line}:${location.column}"

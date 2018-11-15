@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.daemon.client
 
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.daemon.client.KotlinCompilerDaemonClient.Companion.instantiate
-import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
 import org.jetbrains.kotlin.daemon.common.*
-import org.jetbrains.kotlin.daemon.common.DummyProfiler
-import org.jetbrains.kotlin.daemon.common.Profiler
 import org.jetbrains.kotlin.daemon.common.impls.ReportSeverity
 import java.io.File
 
@@ -60,25 +57,23 @@ interface KotlinCompilerDaemonClient {
         profiler: Profiler = DummyProfiler()
     ): Int
 
+    fun getOrCreateClientFlagFile(daemonOptions: DaemonOptions): File
+
     fun createCompResults(): CompilationResultsAsync
 
     fun main(vararg args: String)
 
     companion object {
         fun instantiate(version: Version): KotlinCompilerDaemonClient =
-            when (version) {
-                Version.RMI ->
-                    ClassLoader
-                        .getSystemClassLoader()
-                        .loadClass("org.jetbrains.kotlin.daemon.client.KotlinCompilerClient")
-                        .newInstance() as KotlinCompilerDaemonClient
-
-                Version.SOCKETS ->
-                    ClassLoader
-                        .getSystemClassLoader()
-                        .loadClass("org.jetbrains.kotlin.daemon.client.experimental.KotlinCompilerClient")
-                        .newInstance() as KotlinCompilerDaemonClient
-            }
+            KotlinCompilerDaemonClient::class.java
+                .classLoader
+                .loadClass(
+                    when(version) {
+                        Version.RMI -> "org.jetbrains.kotlin.daemon.client.KotlinCompilerClient"
+                        Version.SOCKETS -> "org.jetbrains.kotlin.daemon.client.experimental.KotlinCompilerClient"
+                    }
+                )
+                .newInstance() as KotlinCompilerDaemonClient
     }
 
 }

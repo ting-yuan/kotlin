@@ -48,8 +48,9 @@ interface KotlinRemoteReplCompilerClient : ReplCompiler {
         ): KotlinRemoteReplCompilerClient =
             when (compileService::class.java.simpleName) {
                 "CompileServiceClientSideImpl" ->
-                    ClassLoader
-                        .getSystemClassLoader()
+                    this
+                        .javaClass
+                        .classLoader
                         .loadClass("org.jetbrains.kotlin.daemon.client.experimental.KotlinRemoteReplCompilerClientAsync")
                         .getDeclaredConstructor(
                             CompileServiceAsync::class.java,

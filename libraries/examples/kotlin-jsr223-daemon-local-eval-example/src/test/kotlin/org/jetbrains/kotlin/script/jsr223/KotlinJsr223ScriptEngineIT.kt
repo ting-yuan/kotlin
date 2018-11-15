@@ -17,7 +17,7 @@
 package org.jetbrains.kotlin.script.jsr223
 
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.daemon.common.threadCpuTime
+import org.jetbrains.kotlin.daemon.common.impls.threadCpuTime
 import org.junit.Assert
 import org.junit.Test
 import java.lang.management.ManagementFactory
