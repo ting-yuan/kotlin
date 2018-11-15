@@ -14,10 +14,11 @@ import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler
 import org.jetbrains.kotlin.daemon.CompileServiceImpl
 import org.jetbrains.kotlin.daemon.CompilerSelector
-import org.jetbrains.kotlin.daemon.client.experimental.new.BasicCompilerServicesWithResultsFacadeServerServerSide
-import org.jetbrains.kotlin.daemon.client.experimental.new.KotlinCompilerClient
+import org.jetbrains.kotlin.daemon.client.KotlinCompilerDaemonClient
+import org.jetbrains.kotlin.daemon.client.experimental.BasicCompilerServicesWithResultsFacadeServerServerSide
 import org.jetbrains.kotlin.daemon.common.*
 import org.jetbrains.kotlin.daemon.common.experimental.*
+import org.jetbrains.kotlin.daemon.common.impls.*
 import org.jetbrains.kotlin.daemon.experimental.CompileServiceServerSideImpl
 import org.jetbrains.kotlin.daemon.loggerCompatiblePath
 import org.jetbrains.kotlin.integration.KotlinIntegrationTestBase
@@ -33,6 +34,8 @@ import kotlin.concurrent.schedule
 
 
 class ConnectionsTest : KotlinIntegrationTestBase() {
+
+    val kotlinCompilerClient = KotlinCompilerDaemonClient.instantiate(Version.SOCKETS)
 
     private val logFile = createTempFile("/Users/jetbrains/Documents/kotlin/my_fork/kotlin", ".txt").also {
         println("client log file path : ${it.loggerCompatiblePath}")
@@ -217,7 +220,7 @@ class ConnectionsTest : KotlinIntegrationTestBase() {
         OLD(1), NEW(2), ANY(null)
     }
 
-    private fun expectNewDaemon(serverType: ServerType, extraAction: (CompileServiceClientSide) -> Unit = {}) = expectDaemon(
+    private fun expectNewDaemon(serverType: ServerType, extraAction: (CompileServiceAsync) -> Unit = {}) = expectDaemon(
         getDaemons = ::getNewDaemonsOrAsyncWrappers,
         chooseDaemon = { daemons -> daemons.maxWith(comparator)!!.daemon },
         getInfo = { d -> runBlocking { d.getDaemonInfo() } },
@@ -347,7 +350,7 @@ class ConnectionsTest : KotlinIntegrationTestBase() {
                 )
                 services.runServer()
                 val servicesClient = services.clientSide
-                val compResultsClient = KotlinCompilerClient.createCompResults().clientSide
+                val compResultsClient = kotlinCompilerClient.createCompResults().clientSide
                 val threadCount = 10
                 fun runThread(i: Int) =
                     async(newSingleThreadContext("thread_$i")) {

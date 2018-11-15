@@ -53,7 +53,7 @@ dependencies {
     testCompile(project(":compiler:ir.tree")) // used for deepCopyWithSymbols call that is removed by proguard from the compiler TODO: make it more straightforward
     testCompile(project(":kotlin-scripting-compiler"))
     testCompile(project(":kotlin-script-util"))
-    testCompileOnly(projectRuntimeJar(":kotlin-daemon-client"))
+    testCompileOnly(projectRuntimeJar(":kotlin-daemon-client-new"))
     testCompileOnly(project(":kotlin-reflect-api"))
     testCompile(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) { isTransitive = false }
     testCompile(commonDep("io.ktor", "ktor-network")) {
@@ -69,9 +69,9 @@ dependencies {
     testCompileOnly(intellijDep()) { includeJars("openapi", "idea", "idea_rt", "util", "asm-all", rootProject = rootProject) }
 
     testRuntime(project(":kotlin-reflect"))
-    testRuntime(project(":kotlin-daemon-client"))
+    testRuntime(project(":kotlin-daemon-client-new"))
     testRuntime(project(":compiler:daemon")) // +
-    testRuntime(project(":compiler:daemon-common")) // +
+    testRuntime(project(":compiler:daemon-common-new")) // +
     testRuntime(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) { isTransitive = false }
     testRuntime(commonDep("io.ktor", "ktor-network")) {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")

@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
 import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.impls.ReportSeverity
+import org.jetbrains.kotlin.daemon.common.impls.threadCpuTime
 import org.jetbrains.kotlin.script.StandardScriptDefinition
 import org.jetbrains.kotlin.script.tryConstructClassFromStringArgs
 import org.jetbrains.kotlin.test.ConfigurationKind
@@ -200,7 +202,9 @@ class SourceSectionsTest : TestCaseWithTmpdir() {
             val messageCollector = TestMessageCollector()
 
             val daemonWithSession = KotlinCompilerClient.connectAndLease(compilerId, aliveFile, daemonJVMOptions, daemonOptions,
-                                                                         DaemonReportingTargets(messageCollector = messageCollector), autostart = true, leaseSession = true)
+                                                                         DaemonReportingTargets(
+                                                                             messageCollector = messageCollector
+                                                                         ), autostart = true, leaseSession = true)
             assertNotNull("failed to connect daemon:\ncompiler id: $compilerId\ndaemon opts: $daemonOptions\njvm opts: $daemonJVMOptions\nalive file: $aliveFile\n", daemonWithSession)
 
             try {

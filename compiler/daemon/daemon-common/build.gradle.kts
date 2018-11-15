@@ -1,3 +1,4 @@
+import com.sun.javafx.scene.CameraHelper.project
 
 plugins {
     kotlin("jvm")
@@ -15,18 +16,14 @@ dependencies {
     compileOnly(project(":js:js.frontend"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
-    runtime(project(":kotlin-reflect"))
-    compileOnly(project(":kotlin-reflect-api"))
-    compile(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) { isTransitive = false }
-    compile(commonDep("io.ktor", "ktor-network")) {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")    }
+    compile(projectDist(":kotlin-reflect"))
+    compile(project(":kotlin-reflect-api"))
+    compile(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) {
+        isTransitive = false
+    }
 }
 
 sourceSets {
     "main" { projectDefault() }
     "test" {}
 }
-

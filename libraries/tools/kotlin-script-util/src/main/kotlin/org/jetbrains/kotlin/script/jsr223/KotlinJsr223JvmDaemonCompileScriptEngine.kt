@@ -19,11 +19,12 @@ package org.jetbrains.kotlin.script.jsr223
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
-import org.jetbrains.kotlin.daemon.client.DaemonReportMessage
-import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
+import org.jetbrains.kotlin.daemon.client.impls.DaemonReportMessage
+import org.jetbrains.kotlin.daemon.client.impls.DaemonReportingTargets
 import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
-import org.jetbrains.kotlin.daemon.client.KotlinRemoteReplCompilerClient
+import org.jetbrains.kotlin.daemon.client.impls.KotlinRemoteReplCompilerClient
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.impls.makeAutodeletingFlagFile
 import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
@@ -50,13 +51,13 @@ class KotlinJsr223JvmDaemonCompileScriptEngine(
     override val replCompiler by lazy {
         daemon.let {
             KotlinRemoteReplCompilerClient(
-                    it,
-                    makeAutodeletingFlagFile("jsr223-repl-session"),
-                    CompileService.TargetPlatform.JVM,
-                    emptyArray(),
-                    PrintingMessageCollector(PrintStream(compilerOut), MessageRenderer.WITHOUT_PATHS, false),
-                    templateClasspath,
-                    templateClassName)
+                it,
+                makeAutodeletingFlagFile("jsr223-repl-session"),
+                CompileService.TargetPlatform.JVM,
+                emptyArray(),
+                PrintingMessageCollector(PrintStream(compilerOut), MessageRenderer.WITHOUT_PATHS, false),
+                templateClasspath,
+                templateClassName)
         }
     }
 
@@ -78,7 +79,11 @@ class KotlinJsr223JvmDaemonCompileScriptEngine(
 
         val daemonReportMessages = arrayListOf<DaemonReportMessage>()
 
-        return KotlinCompilerClient.connectToCompileService(compilerId, daemonJVMOptions, daemonOptions, DaemonReportingTargets(null, daemonReportMessages), true, true)
+        return KotlinCompilerClient.connectToCompileService(compilerId, daemonJVMOptions, daemonOptions,
+                                                            DaemonReportingTargets(
+                                                                null,
+                                                                daemonReportMessages
+                                                            ), true, true)
                ?: throw ScriptException("Unable to connect to repl server:" + daemonReportMessages.joinToString("\n  ", prefix = "\n  ") { "${it.category.name} ${it.message}" })
     }
 }

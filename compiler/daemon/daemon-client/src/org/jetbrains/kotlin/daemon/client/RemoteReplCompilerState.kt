@@ -16,10 +16,8 @@
 
 package org.jetbrains.kotlin.daemon.client
 
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.runBlocking
 import org.jetbrains.kotlin.cli.common.repl.*
-import org.jetbrains.kotlin.daemon.common.ReplStateFacade
+import org.jetbrains.kotlin.daemon.common.impls.ReplStateFacade
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
