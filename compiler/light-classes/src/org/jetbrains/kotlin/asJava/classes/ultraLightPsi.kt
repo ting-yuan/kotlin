@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: UltraLightSupport) :
     KtLightClassImpl(classOrObject) {
@@ -323,7 +324,7 @@ class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: Ult
         val wrapper = KtUltraLightMethod(method, ktFunction, support, this)
         addReceiverParameter(ktFunction, wrapper)
         for (parameter in ktFunction.valueParameters) {
-            method.addParameter(KtUltraLightParameter(parameter.name.orEmpty(), parameter, support, wrapper, null))
+            method.addParameter(KtUltraLightParameter(parameter.name.orEmpty(), parameter, support, wrapper, null, ktFunction))
         }
         val returnType: PsiType? by lazyPub {
             if (isConstructor) null
@@ -333,11 +334,9 @@ class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: Ult
         return wrapper
     }
 
-    private fun addReceiverParameter(f: KtDeclaration, method: KtUltraLightMethod) {
-        val receiver = (f as? KtCallableDeclaration)?.receiverTypeReference
-        if (receiver != null) {
-            method.delegate.addParameter(KtUltraLightParameter("\$self", f, support, method, receiver))
-        }
+    private fun addReceiverParameter(callable: KtCallableDeclaration, method: KtUltraLightMethod) {
+        val receiver = callable.receiverTypeReference ?: return
+        method.delegate.addParameter(KtUltraLightParameter("\$self", callable, support, method, receiver, callable))
     }
 
     private fun methodReturnType(ktDeclaration: KtDeclaration, wrapper: KtUltraLightMethod): PsiType {
@@ -346,7 +345,7 @@ class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: Ult
                 ?: return PsiType.NULL
 
         return support.mapType(wrapper) { typeMapper, signatureWriter ->
-            typeMapper.mapReturnType(desc, signatureWriter)
+            typeMapper.writeReturnType(desc, signatureWriter)
         }
     }
 
@@ -434,7 +433,7 @@ class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: Ult
         return f.hasModifier(INTERNAL_KEYWORD)
     }
 
-    private fun propertyAccessors(declaration: KtNamedDeclaration, mutable: Boolean, onlyJvmStatic: Boolean): List<KtLightMethod> {
+    private fun propertyAccessors(declaration: KtCallableDeclaration, mutable: Boolean, onlyJvmStatic: Boolean): List<KtLightMethod> {
         val propertyName = declaration.name
         if (declaration.hasModifier(CONST_KEYWORD) || propertyName == null) return emptyList()
 
@@ -478,7 +477,9 @@ class KtUltraLightClass(classOrObject: KtClassOrObject, private val support: Ult
             val setterWrapper = KtUltraLightMethod(setterPrototype, declaration, support, this)
             addReceiverParameter(declaration, setterWrapper)
             val parameterOrigin = ktSetter?.parameter ?: declaration
-            setterPrototype.addParameter(KtUltraLightParameter(propertyName, parameterOrigin, support, setterWrapper, null))
+            setterPrototype.addParameter(
+                KtUltraLightParameter(propertyName, parameterOrigin, support, setterWrapper, null, declaration)
+            )
             result.add(setterWrapper)
         }
         return result
@@ -535,9 +536,14 @@ private class KtUltraLightField(
 
     private val _type: PsiType by lazyPub {
         fun nonExistent() = JavaPsiFacade.getElementFactory(project).createTypeFromText("error.NonExistentClass", declaration)
+
+        val propertyDescriptor: PropertyDescriptor? by lazyUnsafe {
+            declaration.resolve() as? PropertyDescriptor
+        }
+
         when {
             declaration is KtProperty && declaration.hasDelegate() ->
-                (declaration.resolve() as? PropertyDescriptor)
+                propertyDescriptor
                     ?.let {
                         val context = LightClassGenerationSupport.getInstance(project).analyze(declaration)
                         PropertyCodegen.getDelegateTypeForProperty(declaration, it, context)
@@ -548,14 +554,14 @@ private class KtUltraLightField(
             declaration is KtObjectDeclaration ->
                 KtLightClassForSourceDeclaration.create(declaration)?.let { JavaPsiFacade.getElementFactory(project).createType(it) }
                     ?: nonExistent()
-            else ->
-                declaration.getKotlinType()?.let {
-                    val mode = when {
-                        (declaration.resolve() as? PropertyDescriptor)?.isVar == true -> TypeMappingMode.getOptimalModeForValueParameter(it)
-                        else -> TypeMappingMode.getOptimalModeForReturnType(it, false)
-                    }
-                    it.asPsiType(support, mode, this)
-                } ?: PsiType.NULL
+            else -> {
+                val kotlinType = declaration.getKotlinType() ?: return@lazyPub PsiType.NULL
+                val descriptor = propertyDescriptor ?: return@lazyPub PsiType.NULL
+
+                support.mapType(this) { typeMapper, sw ->
+                    typeMapper.writeFieldSignature(kotlinType, descriptor, sw)
+                }
+            }
         }
     }
 
@@ -633,7 +639,8 @@ internal class KtUltraLightParameter(
     override val kotlinOrigin: KtDeclaration,
     private val support: UltraLightSupport,
     method: KtLightMethod,
-    private val receiver: KtTypeReference?
+    private val receiver: KtTypeReference?,
+    private val containingFunction: KtCallableDeclaration
 ) : org.jetbrains.kotlin.asJava.elements.LightParameter(
     name,
     PsiType.NULL,
@@ -661,7 +668,11 @@ internal class KtUltraLightParameter(
         }
     }
     private val _type: PsiType by lazyPub {
-        kotlinType?.let { it.asPsiType(support, TypeMappingMode.getOptimalModeForValueParameter(it), this) } ?: PsiType.NULL
+        val kotlinType = kotlinType ?: return@lazyPub PsiType.NULL
+        val containingDescriptor = containingFunction.resolve()?.safeAs<CallableDescriptor>() ?: return@lazyPub PsiType.NULL
+        support.mapType(this) { typeMapper, sw ->
+            typeMapper.writeParameterType(sw, kotlinType, containingDescriptor)
+        }
     }
 
     override fun getType(): PsiType = _type

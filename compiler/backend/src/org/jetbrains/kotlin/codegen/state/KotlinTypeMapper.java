@@ -388,7 +388,7 @@ public class KotlinTypeMapper {
     }
 
     @NotNull
-    public Type mapReturnType(@NotNull CallableDescriptor descriptor, @Nullable JvmSignatureWriter sw) {
+    private Type mapReturnType(@NotNull CallableDescriptor descriptor, @Nullable JvmSignatureWriter sw) {
         KotlinType returnType = descriptor.getReturnType();
         assert returnType != null : "Function has no return type: " + descriptor;
 
@@ -1334,9 +1334,7 @@ public class KotlinTypeMapper {
                 writeParameter(sw, forceBoxing ? TypeUtils.makeNullable(type) : type, f);
             });
 
-            sw.writeReturnType();
-            mapReturnType(f, sw);
-            sw.writeReturnTypeEnd();
+            writeReturnType(f, sw);
         }
 
         JvmMethodGenericSignature signature = sw.makeJvmMethodSignature(mapFunctionName(f, kind));
@@ -1352,6 +1350,12 @@ public class KotlinTypeMapper {
         }
 
         return signature;
+    }
+
+    public void writeReturnType(@NotNull FunctionDescriptor f, @NotNull  JvmSignatureWriter sw) {
+        sw.writeReturnType();
+        mapReturnType(f, sw);
+        sw.writeReturnTypeEnd();
     }
 
     private void checkOwnerCompatibility(@NotNull FunctionDescriptor descriptor) {
@@ -1462,14 +1466,22 @@ public class KotlinTypeMapper {
     public String mapFieldSignature(@NotNull KotlinType backingFieldType, @NotNull PropertyDescriptor propertyDescriptor) {
         JvmSignatureWriter sw = new BothSignatureWriter(BothSignatureWriter.Mode.TYPE);
 
+        writeFieldSignature(backingFieldType, propertyDescriptor, sw);
+
+        return sw.makeJavaGenericSignature();
+    }
+
+    public void writeFieldSignature(
+            @NotNull KotlinType backingFieldType,
+            @NotNull PropertyDescriptor propertyDescriptor,
+            JvmSignatureWriter sw
+    ) {
         if (!propertyDescriptor.isVar()) {
             mapReturnType(propertyDescriptor, sw, backingFieldType);
         }
         else {
             writeParameterType(sw, backingFieldType, propertyDescriptor);
         }
-
-        return sw.makeJavaGenericSignature();
     }
 
     public void writeFormalTypeParameters(@NotNull List<TypeParameterDescriptor> typeParameters, @NotNull JvmSignatureWriter sw) {
@@ -1548,7 +1560,7 @@ public class KotlinTypeMapper {
         sw.writeParameterTypeEnd();
     }
 
-    private void writeParameterType(
+    public void writeParameterType(
             @NotNull JvmSignatureWriter sw,
             @NotNull KotlinType type,
             @Nullable CallableDescriptor callableDescriptor
