@@ -20,6 +20,8 @@ val clean by tasks.getting {
 
 val JDK_18: String = rootProject.extra["JDK_18"] as String
 
+// We avoid using JavaExec task here due to IDEA-200192:
+// IDEA attaches debugger to all JavaExec tasks making our breakpoints trigger during irrelevant task execution
 val serialize by tasks.creating(Exec::class) {
     val outDir = builtinsSerialized
     val inDirs = arrayOf(builtinsSrc, builtinsNative)
