@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.sequenceOfLazyValues
 
 class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache() {
@@ -160,15 +161,6 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         return limitedByMaxCount.toTypedArray()
     }
 
-    override fun getFieldsByNameIfNotMoreThan(name: String, scope: GlobalSearchScope, maxCount: Int): Array<PsiField> {
-        require(maxCount >= 0)
-        val psiFields = getFieldSequenceByName(name, scope)
-        val limitedByMaxCount = psiFields.take(maxCount).toList()
-        if (limitedByMaxCount.size == 0)
-            return PsiField.EMPTY_ARRAY
-        return limitedByMaxCount.toTypedArray()
-    }
-
     override fun processMethodsWithName(name: String, scope: GlobalSearchScope, processor: Processor<PsiMethod>): Boolean =
         ContainerUtil.process(getMethodsByName(name, scope), processor)
 
@@ -192,14 +184,8 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }
     }
 
-    private fun getFieldSequenceByName(name: String, scope: GlobalSearchScope): Sequence<PsiField> {
-        return KotlinPropertyShortNameIndex.getInstance().get(name, project, scope).asSequence()
-            .map { LightClassUtil.getLightClassBackingField(it) }
-            .filterNotNull()
-    }
-
-    override fun getFieldsByName(name: String, scope: GlobalSearchScope): Array<PsiField> {
-        return getFieldSequenceByName(name, scope).toList().toTypedArray()
+    override fun processAllFieldNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?): Boolean {
+        return processAllFieldNames(processor)
     }
 
     override fun getAllFieldNames(): Array<String> {
@@ -208,12 +194,52 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }.toArray(arrayOf())
     }
 
-    override fun processAllFieldNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?): Boolean {
-        return processAllFieldNames(processor)
-    }
-
     private fun processAllFieldNames(processor: Processor<String>): Boolean {
         return KotlinPropertyShortNameIndex.getInstance().processAllKeys(project, processor)
+    }
+
+    override fun processFieldsWithName(
+        name: String,
+        processor: Processor<in PsiField>,
+        scope: GlobalSearchScope,
+        filter: IdFilter?
+    ): Boolean {
+        return StubIndex.getInstance().processElements(
+            KotlinPropertyShortNameIndex.getInstance().key,
+            name,
+            project,
+            scope,
+            filter,
+            KtNamedDeclaration::class.java
+        ) { ktNamedDeclaration ->
+            val field = LightClassUtil.getLightClassBackingField(ktNamedDeclaration)
+            if (field == null) {
+                return@processElements true
+            }
+
+            return@processElements processor.process(field)
+        }
+    }
+
+    override fun getFieldsByName(name: String, scope: GlobalSearchScope): Array<PsiField> {
+        return CancelableArrayCollectProcessor<PsiField>().also { processor ->
+            processFieldsWithName(name, processor, scope, null)
+        }.toArray(arrayOf())
+    }
+
+    override fun getFieldsByNameIfNotMoreThan(name: String, scope: GlobalSearchScope, maxCount: Int): Array<PsiField> {
+        require(maxCount >= 0)
+
+        return CancelableArrayCollectProcessor<PsiField>().also { processor ->
+            processFieldsWithName(
+                name,
+                { psiField ->
+                    processor.size != maxCount && processor.process(psiField)
+                },
+                scope,
+                null
+            )
+        }.toArray(PsiField.EMPTY_ARRAY)
     }
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
@@ -223,6 +249,8 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         override fun process(value: T): Boolean {
             return processor.process(value)
         }
+
+        val size: Int get() = troveSet.size
 
         fun toArray(a: Array<T>): Array<T> = troveSet.toArray(a)
     }
