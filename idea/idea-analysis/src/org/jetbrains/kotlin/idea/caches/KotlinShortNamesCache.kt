@@ -266,9 +266,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             KtNamedDeclaration::class.java
         ) { ktNamedDeclaration ->
             val field = LightClassUtil.getLightClassBackingField(ktNamedDeclaration)
-            if (field == null) {
-                return@processElements true
-            }
+                ?: return@processElements true
 
             return@processElements processor.process(field)
         }
