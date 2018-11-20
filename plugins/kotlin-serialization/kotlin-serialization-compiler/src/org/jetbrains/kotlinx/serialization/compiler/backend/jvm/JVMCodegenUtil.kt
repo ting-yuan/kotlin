@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlinx.serialization.compiler.backend.common.AbstractSerialGenerator
 import org.jetbrains.kotlinx.serialization.compiler.backend.common.SerialTypeInfo
+import org.jetbrains.kotlinx.serialization.compiler.backend.common.findAddOnSerializer
 import org.jetbrains.kotlinx.serialization.compiler.backend.common.findTypeSerializerOrContext
 import org.jetbrains.kotlinx.serialization.compiler.resolve.*
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.DECODER_CLASS
@@ -309,6 +310,18 @@ class JVMSerialTypeInfo(
 ) : SerialTypeInfo(property, nn, serializer, unit)
 
 fun AbstractSerialGenerator.getSerialTypeInfo(property: SerializableProperty, type: Type): JVMSerialTypeInfo {
+    fun SerializableInfo(serializer: ClassDescriptor?) =
+        JVMSerialTypeInfo(
+            property,
+            Type.getType("Ljava/lang/Object;"),
+            if (property.type.isMarkedNullable) "Nullable" else "",
+            serializer
+        )
+
+    property.serializableWith?.toClassDescriptor?.let { return SerializableInfo(it) }
+    property.type.overridenSerializer?.toClassDescriptor?.let { return SerializableInfo(it) }
+    findAddOnSerializer(property.type)?.let { return SerializableInfo(it) }
+
     if (property.type.isTypeParameter()) return JVMSerialTypeInfo(
         property,
         Type.getType("Ljava/lang/Object;"),
