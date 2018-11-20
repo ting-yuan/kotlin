@@ -85,9 +85,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             val fqNameToSearch = if (isInterfaceDefaultImpl) fqName.defaultImplsChild() else fqName
 
             val psiClass = JavaElementFinder.getInstance(project).findClass(fqNameToSearch.asString(), effectiveScope)
-            if (psiClass == null) {
-                return@Processor true
-            }
+                ?: return@Processor true
 
             return@Processor processor.process(psiClass)
         }
