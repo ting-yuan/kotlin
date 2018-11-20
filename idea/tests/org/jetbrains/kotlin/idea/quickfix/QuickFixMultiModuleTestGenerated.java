@@ -309,6 +309,31 @@ public class QuickFixMultiModuleTestGenerated extends AbstractQuickFixMultiModul
         runTest("idea/testData/multiModuleQuickFix/expectEnumEmpty/");
     }
 
+    @TestMetadata("expectFunWithAccessibleAlias")
+    public void testExpectFunWithAccessibleAlias() throws Exception {
+        runTest("idea/testData/multiModuleQuickFix/expectFunWithAccessibleAlias/");
+    }
+
+    @TestMetadata("expectFunWithAccessibleExpansion")
+    public void testExpectFunWithAccessibleExpansion() throws Exception {
+        runTest("idea/testData/multiModuleQuickFix/expectFunWithAccessibleExpansion/");
+    }
+
+    @TestMetadata("expectFunWithAccessibleParameter")
+    public void testExpectFunWithAccessibleParameter() throws Exception {
+        runTest("idea/testData/multiModuleQuickFix/expectFunWithAccessibleParameter/");
+    }
+
+    @TestMetadata("expectFunWithInaccessibleParameter")
+    public void testExpectFunWithInaccessibleParameter() throws Exception {
+        runTest("idea/testData/multiModuleQuickFix/expectFunWithInaccessibleParameter/");
+    }
+
+    @TestMetadata("expectFunWithInaccessibleTypeParameter")
+    public void testExpectFunWithInaccessibleTypeParameter() throws Exception {
+        runTest("idea/testData/multiModuleQuickFix/expectFunWithInaccessibleTypeParameter/");
+    }
+
     @TestMetadata("expectFunWithJdk")
     public void testExpectFunWithJdk() throws Exception {
         runTest("idea/testData/multiModuleQuickFix/expectFunWithJdk/");

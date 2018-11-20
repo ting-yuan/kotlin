@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.caches.project.implementedDescriptors
 import org.jetbrains.kotlin.idea.caches.project.implementedModules
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -23,15 +24,24 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.hasDeclarationOf
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.MultiTargetPlatform
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.getMultiTargetPlatform
+import org.jetbrains.kotlin.types.AbbreviatedType
+import org.jetbrains.kotlin.types.KotlinType
 
 sealed class CreateExpectedFix<out D : KtNamedDeclaration>(
     declaration: D,
@@ -57,7 +67,14 @@ sealed class CreateExpectedFix<out D : KtNamedDeclaration>(
         val targetExpectedClass = targetExpectedClassPointer?.element
         val expectedFile = targetExpectedClass?.containingKtFile ?: getOrCreateImplementationFile() ?: return
         DumbService.getInstance(project).runWhenSmart {
-            val generated = factory.generateIt(project, element) ?: return@runWhenSmart
+            val generated = try {
+                factory.generateIt(project, element) ?: return@runWhenSmart
+            } catch (e: KotlinTypeInaccessibleException) {
+                if (editor != null) {
+                    showErrorHint(project, editor, "Cannot generate expected $elementType: " + e.message, e.message)
+                }
+                return@runWhenSmart
+            }
 
             project.executeWriteCommand("Create expected declaration") {
                 if (expectedFile.packageDirective?.fqName != file.packageDirective?.fqName &&
@@ -237,6 +254,10 @@ private fun generateFunction(
     descriptor: FunctionDescriptor,
     targetClass: KtClassOrObject? = null
 ): KtFunction {
+    descriptor.returnType?.checkAccessibility(targetClass)
+    descriptor.valueParameters.forEach {
+        it.type.checkAccessibility(targetClass)
+    }
     val memberChooserObject = OverrideMemberChooserObject.create(
         actualFunction, descriptor, descriptor,
         OverrideMemberChooserObject.BodyType.NO_BODY
@@ -254,6 +275,7 @@ private fun generateProperty(
     descriptor: PropertyDescriptor,
     targetClass: KtClassOrObject? = null
 ): KtProperty {
+    descriptor.type.checkAccessibility(targetClass)
     val memberChooserObject = OverrideMemberChooserObject.create(
         actualProperty, descriptor, descriptor,
         OverrideMemberChooserObject.BodyType.NO_BODY
@@ -265,6 +287,43 @@ private fun generateProperty(
     } as KtProperty
 }
 
+private fun KotlinType.checkAccessibility(accessibleClass: KtClassOrObject?) {
+    for (argument in arguments) {
+        if (argument.isStarProjection) continue
+        argument.type.checkAccessibility(accessibleClass)
+    }
+    val classifierDescriptor = constructor.declarationDescriptor as? ClassifierDescriptorWithTypeParameters ?: return
+    val moduleDescriptor = classifierDescriptor.module
+    if (moduleDescriptor.getMultiTargetPlatform() == MultiTargetPlatform.Common) {
+        // Common classes are Ok
+        return
+    }
+    val implementedDescriptors = moduleDescriptor.implementedDescriptors
+    if (implementedDescriptors.isEmpty()) {
+        // This happens now if we are not in sources, in this case yet we cannot answer question about accessibility
+        // Very rude check about JDK classes
+        if (!classifierDescriptor.fqNameSafe.toString().startsWith("java.")) return
+    }
+    if (implementedDescriptors.any { it.hasDeclarationOf(classifierDescriptor) }) {
+        // Platform classes with expected class are also Ok
+        return
+    }
+    if (accessibleClass != null) {
+        var currentClass = accessibleClass
+        do {
+            if (classifierDescriptor.name == currentClass?.nameAsName) return
+            currentClass = currentClass?.containingClassOrObject
+        } while (currentClass != null)
+    }
+    if (this is AbbreviatedType) {
+        // For type aliases without expected class, check expansions instead
+        expandedType.checkAccessibility(accessibleClass)
+    } else {
+        throw KotlinTypeInaccessibleException(this)
+    }
+}
 
-
-
+class KotlinTypeInaccessibleException(val type: KotlinType) : Exception() {
+    override val message: String
+        get() = "Type ${type.getJetTypeFqName(true)} is not accessible from common code"
+}
