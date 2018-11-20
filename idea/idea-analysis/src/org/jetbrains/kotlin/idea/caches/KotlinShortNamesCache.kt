@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.containers.ContainerUtil
@@ -61,9 +62,9 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
      * Return kotlin class names from project sources which should be visible from java.
      */
     override fun getAllClassNames(): Array<String> {
-        return CancelableArrayCollectProcessor<String>().also { processor ->
+        return withArrayProcessor(ArrayUtil.EMPTY_STRING_ARRAY) { processor ->
             processAllClassNames(processor)
-        }.toArray(arrayOf())
+        }
     }
 
     override fun processClassesWithName(
@@ -121,9 +122,9 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
      * Return class names form kotlin sources in given scope which should be visible as Java classes.
      */
     override fun getClassesByName(name: String, scope: GlobalSearchScope): Array<PsiClass> {
-        return CancelableArrayCollectProcessor<PsiClass>().also { processor ->
+        return withArrayProcessor(PsiClass.EMPTY_ARRAY) { processor ->
             processClassesWithName(name, processor, scope, null)
-        }.toArray(arrayOf())
+        }
     }
 
     private fun kotlinDeclarationsVisibleFromJavaScope(scope: GlobalSearchScope): GlobalSearchScope {
@@ -144,9 +145,9 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     override fun getAllMethodNames(): Array<String> {
-        return CancelableArrayCollectProcessor<String>().also { processor ->
+        return withArrayProcessor(ArrayUtil.EMPTY_STRING_ARRAY) { processor ->
             processAllMethodNames(processor)
-        }.toArray(arrayOf())
+        }
     }
 
     private fun processAllMethodNames(processor: Processor<String>): Boolean {
@@ -210,15 +211,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     override fun getMethodsByName(name: String, scope: GlobalSearchScope): Array<PsiMethod> {
-        return CancelableArrayCollectProcessor<PsiMethod>().also { processor ->
+        return withArrayProcessor(PsiMethod.EMPTY_ARRAY) { processor ->
             processMethodsWithName(name, processor, scope, null)
-        }.toArray(arrayOf())
+        }
     }
 
     override fun getMethodsByNameIfNotMoreThan(name: String, scope: GlobalSearchScope, maxCount: Int): Array<PsiMethod> {
         require(maxCount >= 0)
 
-        return CancelableArrayCollectProcessor<PsiMethod>().also { processor ->
+        return withArrayProcessor(PsiMethod.EMPTY_ARRAY) { processor ->
             processMethodsWithName(
                 name,
                 { psiMethod ->
@@ -227,7 +228,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
                 scope,
                 null
             )
-        }.toArray(PsiMethod.EMPTY_ARRAY)
+        }
     }
 
     override fun processMethodsWithName(name: String, scope: GlobalSearchScope, processor: Processor<PsiMethod>): Boolean =
@@ -241,9 +242,9 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     override fun getAllFieldNames(): Array<String> {
-        return CancelableArrayCollectProcessor<String>().also { processor ->
+        return withArrayProcessor(ArrayUtil.EMPTY_STRING_ARRAY) { processor ->
             processAllFieldNames(processor)
-        }.toArray(arrayOf())
+        }
     }
 
     private fun processAllFieldNames(processor: Processor<String>): Boolean {
@@ -274,15 +275,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     override fun getFieldsByName(name: String, scope: GlobalSearchScope): Array<PsiField> {
-        return CancelableArrayCollectProcessor<PsiField>().also { processor ->
+        return withArrayProcessor(PsiField.EMPTY_ARRAY) { processor ->
             processFieldsWithName(name, processor, scope, null)
-        }.toArray(arrayOf())
+        }
     }
 
     override fun getFieldsByNameIfNotMoreThan(name: String, scope: GlobalSearchScope, maxCount: Int): Array<PsiField> {
         require(maxCount >= 0)
 
-        return CancelableArrayCollectProcessor<PsiField>().also { processor ->
+        return withArrayProcessor(PsiField.EMPTY_ARRAY) { processor ->
             processFieldsWithName(
                 name,
                 { psiField ->
@@ -291,9 +292,18 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
                 scope,
                 null
             )
-        }.toArray(PsiField.EMPTY_ARRAY)
+        }
     }
     //endregion
+
+    private inline fun <T> withArrayProcessor(
+        result: Array<T>,
+        process: (CancelableArrayCollectProcessor<T>) -> Unit
+    ): Array<T> {
+        return CancelableArrayCollectProcessor<T>().also { processor ->
+            process(processor)
+        }.toArray(result)
+    }
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
         val troveSet = ContainerUtil.newTroveSet<T>()
