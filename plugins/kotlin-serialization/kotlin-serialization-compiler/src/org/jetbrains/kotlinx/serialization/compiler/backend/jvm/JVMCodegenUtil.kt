@@ -253,7 +253,7 @@ internal fun AbstractSerialGenerator.stackValueSerializerInstance(codegen: Class
         // instantiate all arg serializers on stack
         val signature = StringBuilder("(")
         when (serializer.classId) {
-            enumSerializerId, contextSerializerId -> {
+            enumSerializerId, contextSerializerId, polymorphicSerializerId -> {
                 // a special way to instantiate enum -- need a enum KClass reference
                 aconst(codegen.typeMapper.mapType(kType))
                 AsmUtil.wrapJavaClassIntoKClass(this)
