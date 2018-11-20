@@ -41,7 +41,23 @@ internal fun BaseContinuationImpl.getStackTraceElementImpl(): StackTraceElement?
     checkDebugMetadataVersion(COROUTINES_DEBUG_METADATA_VERSION, debugMetadata.version)
     val label = getLabel()
     val lineNumber = if (label < 0) -1 else debugMetadata.lineNumbers[label]
-    return StackTraceElement(debugMetadata.className, debugMetadata.methodName, debugMetadata.sourceFile, lineNumber)
+    val moduleName = getModuleName(debugMetadata.className)
+    val moduleAndClass = if (moduleName == null) debugMetadata.className else "$moduleName/${debugMetadata.className}"
+    return StackTraceElement(moduleAndClass, debugMetadata.methodName, debugMetadata.sourceFile, lineNumber)
+}
+
+private fun getModuleName(className: String): String? {
+    return try {
+        val clazz = Class.forName(className)
+        val getModuleMethod = Class::class.java.getDeclaredMethod("getModule")
+        val module = getModuleMethod.invoke(clazz)
+        val getDescriptorMethod = module.javaClass.getDeclaredMethod("getDescriptor")
+        val descriptor = getDescriptorMethod.invoke(module)
+        val nameMethod = descriptor.javaClass.getDeclaredMethod("name")
+        nameMethod.invoke(descriptor) as? String
+    } catch (ignore: Exception) {
+        null
+    }
 }
 
 private fun BaseContinuationImpl.getDebugMetadataAnnotation(): DebugMetadata? =
