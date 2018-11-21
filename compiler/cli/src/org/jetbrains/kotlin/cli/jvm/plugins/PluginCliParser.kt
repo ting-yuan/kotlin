@@ -29,6 +29,8 @@ import java.io.File
 import java.util.*
 
 object PluginCliParser {
+    private val classLoaderCache = WeakHashMap<Pair<String, ClassLoader>, PluginURLClassLoader>()
+
     @JvmStatic
     fun loadPluginsSafe(pluginClasspaths: Array<String>?, pluginOptions: Array<String>?, configuration: CompilerConfiguration): ExitCode =
         loadPluginsSafe(pluginClasspaths?.asIterable(), pluginOptions?.asIterable(), configuration)
@@ -59,13 +61,11 @@ object PluginCliParser {
 
     @JvmStatic
     fun loadPlugins(pluginClasspaths: Iterable<String>?, pluginOptions: Iterable<String>?, configuration: CompilerConfiguration) {
-        val classLoader = PluginURLClassLoader(
-            pluginClasspaths
-                ?.map { File(it).toURI().toURL() }
-                ?.toTypedArray()
-                ?: emptyArray(),
-            this::class.java.classLoader
-        )
+        val pluginURLs = pluginClasspaths ?.map { File(it).toURI().toURL() } ?.toTypedArray() ?: emptyArray()
+        val parentClassLoader = this::class.java.classLoader
+        val classLoaderId = Pair(pluginURLs.contentDeepToString(), parentClassLoader)
+        val classLoader = classLoaderCache[classLoaderId] ?: PluginURLClassLoader(pluginURLs, parentClassLoader)
+        classLoaderCache[classLoaderId] = classLoader
 
         val componentRegistrars = ServiceLoader.load(ComponentRegistrar::class.java, classLoader).toMutableList()
         componentRegistrars.addAll(BundledCompilerPlugins.componentRegistrars)
