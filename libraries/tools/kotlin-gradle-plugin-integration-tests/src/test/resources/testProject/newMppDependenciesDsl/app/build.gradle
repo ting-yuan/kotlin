@@ -1,0 +1,31 @@
+plugins {
+	id("org.jetbrains.kotlin.multiplatform").version("<pluginMarkerVersion>")
+}
+
+repositories {
+	mavenLocal()
+	jcenter()
+}
+
+kotlin {
+	jvm("jvm6")
+	js { }
+
+	sourceSets {
+		create("testNonTransitiveStringNotation") {
+			dependencies {
+				api("junit:junit:4.12") { setTransitive(false) }
+			}
+		}
+        create("testNonTransitiveDependencyNotation") {
+            dependencies {
+                api(kotlin("reflect")) { setTransitive(false) }
+            }
+        }
+		create("testProjectWithConfiguration") {
+			dependencies {
+				api(project(path: ":lib", configuration: "outputConfiguration"))
+			}
+		}
+	}
+}
