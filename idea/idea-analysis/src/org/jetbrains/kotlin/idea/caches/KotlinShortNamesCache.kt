@@ -54,7 +54,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
                 KotlinFileFacadeShortNameIndex.INSTANCE.processAllKeys(project, processor)
     }
 
-    override fun processAllClassNames(processor: Processor<String>, scope: GlobalSearchScope?, filter: IdFilter?): Boolean {
+    override fun processAllClassNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?): Boolean {
         return processAllClassNames(processor)
     }
 
