@@ -128,6 +128,7 @@ include ":kotlin-build-common",
         ":kotlin-stdlib-jre8",
         ":kotlin-stdlib-jdk7",
         ":kotlin-stdlib-jdk8",
+        ":kotlin-stdlib-jdk9",
         ":kotlin-stdlib:samples",
         ":kotlin-stdlib:jvm-minimal-for-test",
         ":kotlinx-metadata",
@@ -235,6 +236,7 @@ project(':kotlin-stdlib-jre7').projectDir = "$rootDir/libraries/stdlib/jre7" as 
 project(':kotlin-stdlib-jre8').projectDir = "$rootDir/libraries/stdlib/jre8" as File
 project(':kotlin-stdlib-jdk7').projectDir = "$rootDir/libraries/stdlib/jdk7" as File
 project(':kotlin-stdlib-jdk8').projectDir = "$rootDir/libraries/stdlib/jdk8" as File
+project(':kotlin-stdlib-jdk9').projectDir = "$rootDir/libraries/stdlib/jdk9" as File
 project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
 project(":kotlin-stdlib:jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
 project(':kotlin-reflect').projectDir = "$rootDir/libraries/reflect" as File

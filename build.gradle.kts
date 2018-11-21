@@ -223,6 +223,7 @@ val coreLibProjects = listOf(
         ":kotlin-stdlib-jre8",
         ":kotlin-stdlib-jdk7",
         ":kotlin-stdlib-jdk8",
+        ":kotlin-stdlib-jdk9",
         ":kotlin-test:kotlin-test-common",
         ":kotlin-test:kotlin-test-jvm",
         ":kotlin-test:kotlin-test-junit",

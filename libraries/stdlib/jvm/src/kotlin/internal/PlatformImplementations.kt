@@ -20,12 +20,24 @@ internal open class PlatformImplementations {
     }
 
     public open fun defaultPlatformRandom(): Random = FallbackThreadLocalRandom()
+
+    /* Returns name of clazz's module iff Java version >= 9.
+     *
+     * Returns null otherwise.
+     */
+    public open fun moduleName(clazz: Class<*>): String? = null
 }
 
 
 @JvmField
 internal val IMPLEMENTATIONS: PlatformImplementations = run {
     val version = getJavaVersion()
+    if (version >= 0x90000) {
+        try {
+            return@run castToBaseType<PlatformImplementations>(Class.forName("kotlin.internal.jdk9.JDK9PlatformImplementations").newInstance())
+        } catch (e: ClassNotFoundException) { }
+    }
+
     if (version >= 0x10008) {
         try {
             return@run castToBaseType<PlatformImplementations>(Class.forName("kotlin.internal.jdk8.JDK8PlatformImplementations").newInstance())

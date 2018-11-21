@@ -3,7 +3,10 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 package kotlin.coroutines.jvm.internal
+
+import kotlin.internal.IMPLEMENTATIONS
 
 @Target(AnnotationTarget.CLASS)
 @SinceKotlin("1.3")
@@ -41,23 +44,18 @@ internal fun BaseContinuationImpl.getStackTraceElementImpl(): StackTraceElement?
     checkDebugMetadataVersion(COROUTINES_DEBUG_METADATA_VERSION, debugMetadata.version)
     val label = getLabel()
     val lineNumber = if (label < 0) -1 else debugMetadata.lineNumbers[label]
-    val moduleName = getModuleName(debugMetadata.className)
+    val moduleName = getModuleName()
     val moduleAndClass = if (moduleName == null) debugMetadata.className else "$moduleName/${debugMetadata.className}"
     return StackTraceElement(moduleAndClass, debugMetadata.methodName, debugMetadata.sourceFile, lineNumber)
 }
 
-private fun getModuleName(className: String): String? {
-    return try {
-        val clazz = Class.forName(className)
-        val getModuleMethod = Class::class.java.getDeclaredMethod("getModule")
-        val module = getModuleMethod.invoke(clazz)
-        val getDescriptorMethod = module.javaClass.getDeclaredMethod("getDescriptor")
-        val descriptor = getDescriptorMethod.invoke(module)
-        val nameMethod = descriptor.javaClass.getDeclaredMethod("name")
-        nameMethod.invoke(descriptor) as? String
-    } catch (ignore: Exception) {
-        null
+private val isOnJava9 = IMPLEMENTATIONS.moduleName(Class::class.java) != null
+
+private fun BaseContinuationImpl.getModuleName(): String? {
+    if (!isOnJava9) {
+        return null
     }
+    return IMPLEMENTATIONS.moduleName(this.javaClass)
 }
 
 private fun BaseContinuationImpl.getDebugMetadataAnnotation(): DebugMetadata? =

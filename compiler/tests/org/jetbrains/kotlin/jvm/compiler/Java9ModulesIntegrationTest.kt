@@ -243,12 +243,15 @@ class Java9ModulesIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
     }
 
     fun testCoroutinesDebugMetadata() {
-        val jar = module("usage", listOf(ForTestCompileRuntime.runtimeJarForTests()))
+        val jdk9Jar = File("dist/kotlinc/lib/kotlin-stdlib-jdk9.jar")
+        val jar = module("usage", listOf(ForTestCompileRuntime.runtimeJarForTests(), jdk9Jar))
 
         val command = listOf<String>(
             File(KotlinTestUtils.getJdk9Home(), "bin/java").path,
-            "-p", "${ForTestCompileRuntime.runtimeJarForTests().path}:${jar.path}",
-            "-m", "usage/some.module.withsome.packages.UsageKt"
+            "-p",
+            "${ForTestCompileRuntime.runtimeJarForTests().path}:${jdk9Jar.path}:dist/kotlinc/lib/kotlin-stdlib-jdk8.jar:dist/kotlinc/lib/kotlin-stdlib-jdk7.jar:${jar.path}",
+            "-m",
+            "usage/some.module.withsome.packages.UsageKt"
         )
 
         val process = ProcessBuilder().command(command).start()

@@ -6,5 +6,6 @@ module kotlin.stdlib.jdk8 {
     exports kotlin.streams.jdk8;
     exports kotlin.text.jdk8;
 
+    exports kotlin.internal.jdk8 to kotlin.stdlib.jdk9;
     opens kotlin.internal.jdk8 to kotlin.stdlib;
 }
