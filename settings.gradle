@@ -295,6 +295,7 @@ include ":kotlin-build-common",
         ":libraries:kotlin-prepush-hook",
         ":libraries:tools:mutability-annotations-compat",
         ":include:kotlin-compiler",
+        ":include:kotlin-compiler-tests",
         ":plugins:jvm-abi-gen",
         ":plugins:jvm-abi-gen-embeddable",
 
