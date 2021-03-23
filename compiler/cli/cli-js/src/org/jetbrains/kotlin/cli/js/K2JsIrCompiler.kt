@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
+import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult
 import org.jetbrains.kotlin.js.config.*
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
@@ -195,14 +196,22 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         lateinit var sourceModule: ModulesStructure
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile ||
             (arguments.irProduceJs && arguments.includes == null)) {
-            sourceModule = prepareAnalyzedSourceModule(
-                projectJs,
-                environmentForJS.getSourceFiles(),
-                configurationJs,
-                resolvedLibraries,
-                friendDependencies,
-                AnalyzerWithCompilerReport(config.configuration)
-            )
+            do {
+                sourceModule = prepareAnalyzedSourceModule(
+                    projectJs,
+                    environmentForJS.getSourceFiles(),
+                    configurationJs,
+                    resolvedLibraries,
+                    friendDependencies,
+                    AnalyzerWithCompilerReport(config.configuration)
+                )
+                val result = sourceModule.jsFrontEndResult.jsAnalysisResult
+                if (result is JsAnalysisResult.RetryWithAdditionalRoots) {
+                    environmentForJS.addKotlinSourceRoots(result.additionalKotlinRoots)
+                }
+            } while (result is JsAnalysisResult.RetryWithAdditionalRoots)
+            if (!sourceModule.jsFrontEndResult.jsAnalysisResult.shouldGenerateCode)
+                return OK
         }
 
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
