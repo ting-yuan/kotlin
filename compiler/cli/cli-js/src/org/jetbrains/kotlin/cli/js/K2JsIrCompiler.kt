@@ -191,18 +191,27 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             it.libraryFile.absolutePath in friendAbsolutePaths
         }
 
+        // Run analysis if main module is sources
+        lateinit var sourceModule: ModulesStructure
+        if (arguments.irProduceKlibDir || arguments.irProduceKlibFile ||
+            (arguments.irProduceJs && arguments.includes == null)) {
+            sourceModule = prepareAnalyzedSourceModule(
+                projectJs,
+                environmentForJS.getSourceFiles(),
+                configurationJs,
+                resolvedLibraries,
+                friendDependencies,
+                AnalyzerWithCompilerReport(config.configuration)
+            )
+        }
+
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
             if (arguments.irProduceKlibFile) {
                 require(outputFile.extension == KLIB_FILE_EXTENSION) { "Please set up .klib file as output" }
             }
 
             generateKLib(
-                project = config.project,
-                files = sourcesFiles,
-                analyzer = AnalyzerWithCompilerReport(config.configuration),
-                configuration = config.configuration,
-                allDependencies = resolvedLibraries,
-                friendDependencies = friendDependencies,
+                sourceModule,
                 irFactory = PersistentIrFactory(), // TODO IrFactoryImpl?
                 outputKlibPath = outputFile.path,
                 nopack = arguments.irProduceKlibDir
@@ -214,27 +223,23 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             val includes = arguments.includes
 
-            val mainModule = if (includes != null) {
+            val module = if (includes != null) {
                 if (sourcesFiles.isNotEmpty()) {
                     messageCollector.report(ERROR, "Source files are not supported when -Xinclude is present")
                 }
                 val allLibraries = resolvedLibraries.getFullList()
                 val mainLib = allLibraries.find { it.libraryFile.absolutePath == File(includes).absolutePath }!!
-                MainModule.Klib(mainLib)
+                val lib = MainModule.Klib(mainLib)
+                ModulesStructure(projectJs, lib, configuration, resolvedLibraries, friendDependencies)
             } else {
-                MainModule.SourceFiles(sourcesFiles)
+                sourceModule
             }
 
             if (arguments.wasm) {
                 val res = compileWasm(
-                    projectJs,
-                    mainModule,
-                    AnalyzerWithCompilerReport(config.configuration),
-                    config.configuration,
+                    module,
                     PhaseConfig(wasmPhases),
                     IrFactoryImpl,
-                    allDependencies = resolvedLibraries,
-                    friendDependencies = friendDependencies,
                     exportedDeclarations = setOf(FqName("main"))
                 )
                 val outputWasmFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "wasm")!!
@@ -254,14 +259,9 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             }
 
             val compiledModule = compile(
-                projectJs,
-                mainModule,
-                AnalyzerWithCompilerReport(config.configuration),
-                config.configuration,
+                module,
                 phaseConfig,
                 if (arguments.irDceDriven) PersistentIrFactory() else IrFactoryImpl,
-                allDependencies = resolvedLibraries,
-                friendDependencies = friendDependencies,
                 mainArguments = mainCallArguments,
                 generateFullJs = !arguments.irDce,
                 generateDceJs = arguments.irDce,
