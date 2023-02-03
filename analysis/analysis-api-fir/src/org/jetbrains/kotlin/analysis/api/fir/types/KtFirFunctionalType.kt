@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.name.ClassId
@@ -38,14 +39,22 @@ internal class KtFirFunctionalType(
         builder.classifierBuilder.buildClassLikeSymbolByLookupTag(coneType.lookupTag)
             ?: errorWithFirSpecificEntries("Class was not found", coneType = coneType)
     }
+
+    private val expandedType: ConeClassLikeTypeImpl by cached {
+        coneType.fullyExpandedType(builder.rootSession) as? ConeClassLikeTypeImpl
+            ?: errorWithFirSpecificEntries("coneType cannot be correctly expanded", coneType = coneType) {
+                withEntry("useSiteSession", builder.rootSession) { it.toString() }
+            }
+    }
+
     override val ownTypeArguments: List<KtTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
 
     override val qualifiers: List<KtClassTypeQualifier.KtResolvedClassTypeQualifier> by cached {
-        UsualClassTypeQualifierBuilder.buildQualifiers(coneType, builder)
+        UsualClassTypeQualifierBuilder.buildQualifiers(expandedType, builder)
     }
 
     override val annotationsList: KtAnnotationsList by cached {
-        KtFirAnnotationListForType.create(coneType, builder.rootSession, token)
+        KtFirAnnotationListForType.create(expandedType, builder.rootSession, token)
     }
 
     override val nullability: KtTypeNullability get() = withValidityAssertion { coneType.nullability.asKtNullability() }
@@ -57,8 +66,8 @@ internal class KtFirFunctionalType(
 
     override val arity: Int
         get() = withValidityAssertion {
-            if (coneType.isExtensionFunctionType) coneType.typeArguments.size - 2
-            else coneType.typeArguments.size - 1
+            if (coneType.isExtensionFunctionType) expandedType.typeArguments.size - 2
+            else expandedType.typeArguments.size - 1
         }
 
     @OptIn(KtAnalysisApiInternals::class)
