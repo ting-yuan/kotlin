@@ -128,7 +128,7 @@ abstract class AbstractKotlinCompileTool<T : CommonToolArguments> @Inject constr
         project.objects.fileCollection()
 
     @get:Internal
-    internal abstract val runViaBuildToolsApi: Property<Boolean>
+    abstract val runViaBuildToolsApi: Property<Boolean>
 
     protected fun validateCompilerClasspath() {
         // Note that the check triggers configuration resolution

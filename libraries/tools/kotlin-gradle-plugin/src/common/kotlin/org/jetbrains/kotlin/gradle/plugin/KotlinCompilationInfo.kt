@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.gradle.plugin.sources.dependsOnClosure
 import org.jetbrains.kotlin.gradle.utils.filesProvider
 import org.jetbrains.kotlin.project.model.LanguageSettings
 
-internal sealed class KotlinCompilationInfo {
+sealed class KotlinCompilationInfo {
     abstract val origin: Any
     abstract val project: Project
     abstract val platformType: KotlinPlatformType
@@ -99,7 +99,7 @@ internal sealed class KotlinCompilationInfo {
     }
 }
 
-internal fun KotlinCompilationInfo(compilation: KotlinCompilation<*>): KotlinCompilationInfo.TCS {
+fun KotlinCompilationInfo(compilation: KotlinCompilation<*>): KotlinCompilationInfo.TCS {
     return KotlinCompilationInfo.TCS(compilation)
 }
 

@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.compilerRunner
 /**
  * Controls the log level to print used Kotlin compilation compiler arguments to output.
  */
-internal enum class KotlinCompilerArgumentsLogLevel(val value: String) {
+enum class KotlinCompilerArgumentsLogLevel(val value: String) {
     ERROR("error"),
     WARNING("warning"),
     INFO("info"),

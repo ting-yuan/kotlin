@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.gradle.utils.klibModuleName
 import org.jetbrains.kotlin.gradle.utils.providerWithLazyConvention
 import java.io.File
 
-internal typealias Kotlin2JsCompileConfig = BaseKotlin2JsCompileConfig<Kotlin2JsCompile>
+typealias Kotlin2JsCompileConfig = BaseKotlin2JsCompileConfig<Kotlin2JsCompile>
 
-internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
+open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
     compilation: KotlinCompilationInfo,
 ) : AbstractKotlinCompileConfig<TASK>(compilation) {
 

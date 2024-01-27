@@ -150,14 +150,14 @@ abstract class AbstractKotlinNativeCompile<
     abstract val baseName: String
 
     @get:Input
-    internal val produceUnpackedKlib: Property<Boolean> = objectFactory.propertyWithConvention(false)
+    val produceUnpackedKlib: Property<Boolean> = objectFactory.propertyWithConvention(false)
 
     @get:Input
     @get:Optional
     internal abstract val explicitApiMode: Property<ExplicitApiMode>
 
     @get:Internal
-    internal val konanTarget by project.provider {
+    val konanTarget by project.provider {
         when (val compilation = compilation) {
             is KotlinCompilationInfo.TCS -> (compilation.compilation as AbstractKotlinNativeCompilation).konanTarget
         }
@@ -282,7 +282,7 @@ abstract class AbstractKotlinNativeCompile<
 @CacheableTask
 abstract class KotlinNativeCompile
 @Inject
-internal constructor(
+constructor(
     @get:Internal
     @Transient  // can't be serialized for Gradle configuration cache
     final override val compilation: KotlinCompilationInfo,

@@ -67,7 +67,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
     )
 
     @get:Input
-    internal var incrementalJsKlib: Boolean = true
+    var incrementalJsKlib: Boolean = true
 
     override fun isIncrementalCompilationEnabled(): Boolean {
         val result = incrementalJsKlib || incremental

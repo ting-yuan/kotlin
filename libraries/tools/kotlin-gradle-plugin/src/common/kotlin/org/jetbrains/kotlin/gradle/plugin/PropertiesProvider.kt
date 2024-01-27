@@ -65,7 +65,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 import org.jetbrains.kotlin.util.prefixIfNot
 import java.io.File
 
-internal class PropertiesProvider private constructor(private val project: Project) {
+class PropertiesProvider private constructor(private val project: Project) {
 
     @Deprecated(message = "Please use kotlin.build.report.output=SINGLE_FILE and kotlin.build.report.single_file ")
     val singleBuildMetricsFile: File?

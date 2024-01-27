@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinNativeCompilerOptionsHelper {
+object KotlinNativeCompilerOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinNativeCompilerOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments,
     ) {
@@ -15,7 +15,7 @@ internal object KotlinNativeCompilerOptionsHelper {
         args.moduleName = from.moduleName.orNull
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinNativeCompilerOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinNativeCompilerOptions,
     ) {

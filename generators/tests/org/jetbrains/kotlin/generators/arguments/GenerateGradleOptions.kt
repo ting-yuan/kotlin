@@ -683,7 +683,7 @@ private fun Printer.generateImpl(
     parentType: FqName,
     properties: List<KProperty1<*, *>>
 ) {
-    val modifiers = "internal abstract class"
+    val modifiers = "abstract class"
     val afterType = if (parentImplFqName != null) {
         ": $parentImplFqName(objectFactory), $parentType"
     } else {
@@ -709,14 +709,14 @@ private fun Printer.generateCompilerOptionsHelper(
     argsType: FqName,
     properties: List<KProperty1<*, *>>
 ) {
-    val modifiers = "internal object"
+    val modifiers = "object"
 
     generateDeclaration(
         modifiers,
         helperName,
     ) {
         println()
-        println("internal fun fillCompilerArguments(")
+        println("fun fillCompilerArguments(")
         withIndent {
             println("from: $type,")
             println("args: $argsType,")
@@ -740,7 +740,7 @@ private fun Printer.generateCompilerOptionsHelper(
         println("}")
 
         println()
-        println("internal fun syncOptionsAsConvention(")
+        println("fun syncOptionsAsConvention(")
         withIndent {
             println("from: $type,")
             println("into: $type,")

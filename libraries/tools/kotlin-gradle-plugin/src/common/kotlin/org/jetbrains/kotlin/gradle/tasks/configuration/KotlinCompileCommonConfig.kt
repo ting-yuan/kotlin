@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinCommonCompilation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 
-internal class KotlinCompileCommonConfig(
+class KotlinCompileCommonConfig(
     private val compilationInfo: KotlinCompilationInfo,
 ) : AbstractKotlinCompileConfig<KotlinCompileCommon>(compilationInfo) {
     init {

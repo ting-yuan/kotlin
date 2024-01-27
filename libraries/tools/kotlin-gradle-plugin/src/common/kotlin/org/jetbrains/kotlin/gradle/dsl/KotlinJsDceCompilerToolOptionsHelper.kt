@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinJsDceCompilerToolOptionsHelper {
+object KotlinJsDceCompilerToolOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJsDceCompilerToolOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.K2JSDceArguments,
     ) {
@@ -16,7 +16,7 @@ internal object KotlinJsDceCompilerToolOptionsHelper {
         args.outputDirectory = from.outputDirectory.orNull
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJsDceCompilerToolOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinJsDceCompilerToolOptions,
     ) {

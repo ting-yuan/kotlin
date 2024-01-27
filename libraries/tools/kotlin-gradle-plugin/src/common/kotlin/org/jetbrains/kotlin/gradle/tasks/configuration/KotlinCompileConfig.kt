@@ -34,9 +34,9 @@ import org.jetbrains.kotlin.gradle.utils.detachedResolvable
 import org.jetbrains.kotlin.gradle.utils.providerWithLazyConvention
 import org.jetbrains.kotlin.gradle.utils.setAttribute
 
-internal typealias KotlinCompileConfig = BaseKotlinCompileConfig<KotlinCompile>
+typealias KotlinCompileConfig = BaseKotlinCompileConfig<KotlinCompile>
 
-internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotlinCompileConfig<TASK> {
+open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotlinCompileConfig<TASK> {
 
     init {
         configureTaskProvider { taskProvider ->

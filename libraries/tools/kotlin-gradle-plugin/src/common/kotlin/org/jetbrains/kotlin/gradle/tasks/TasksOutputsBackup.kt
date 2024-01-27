@@ -20,7 +20,7 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-internal class TaskOutputsBackup(
+class TaskOutputsBackup(
     private val fileSystemOperations: FileSystemOperations,
     val buildDirectory: DirectoryProperty,
     val snapshotsDir: Provider<Directory>,

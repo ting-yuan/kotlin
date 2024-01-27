@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal abstract class KotlinCommonCompilerToolOptionsDefault @javax.inject.Inject constructor(
+abstract class KotlinCommonCompilerToolOptionsDefault @javax.inject.Inject constructor(
     objectFactory: org.gradle.api.model.ObjectFactory
 ) : org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerToolOptions {
 

@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinJsCompilerOptionsHelper {
+object KotlinJsCompilerOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments,
     ) {
@@ -28,7 +28,7 @@ internal object KotlinJsCompilerOptionsHelper {
         args.useEsClasses = from.useEsClasses.get()
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions,
     ) {

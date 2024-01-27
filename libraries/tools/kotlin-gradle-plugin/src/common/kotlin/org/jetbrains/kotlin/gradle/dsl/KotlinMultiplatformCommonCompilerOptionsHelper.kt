@@ -5,16 +5,16 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinMultiplatformCommonCompilerOptionsHelper {
+object KotlinMultiplatformCommonCompilerOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonCompilerOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments,
     ) {
         org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptionsHelper.fillCompilerArguments(from, args)
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonCompilerOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonCompilerOptions,
     ) {

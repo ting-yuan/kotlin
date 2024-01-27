@@ -149,7 +149,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     @get:Incremental
     @get:NormalizeLineEndings
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    internal val commonSourceSet: ConfigurableFileCollection = objectFactory.fileCollection()
+    val commonSourceSet: ConfigurableFileCollection = objectFactory.fileCollection()
 
     @get:Internal
     val abiSnapshotFile
@@ -361,7 +361,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
      * Compiler might be executed asynchronously. Do not do anything requiring end of compilation after this function is called.
      * @see [GradleKotlinCompilerWork]
      */
-    internal abstract fun callCompilerAsync(
+    abstract fun callCompilerAsync(
         args: T,
         inputChanges: InputChanges,
         taskOutputsBackup: TaskOutputsBackup?

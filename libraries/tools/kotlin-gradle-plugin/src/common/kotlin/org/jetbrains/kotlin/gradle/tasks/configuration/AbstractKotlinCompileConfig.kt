@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.gradle.tasks.KOTLIN_BUILD_DIR_NAME
  * This contains all data necessary to configure the tasks, and should avoid exposing global state (project, extensions, other tasks)
  * to the task instance as much as possible.
  */
-internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile<*>>(
+abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile<*>>(
     project: Project,
     val ext: KotlinTopLevelExtension
 ) : TaskConfigAction<TASK>(project) {
@@ -155,7 +155,7 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
     }
 }
 
-internal abstract class TaskConfigAction<TASK : Task>(protected val project: Project) {
+abstract class TaskConfigAction<TASK : Task>(protected val project: Project) {
 
     protected val objectFactory: ObjectFactory = project.objects
     protected val providers: ProviderFactory = project.providers

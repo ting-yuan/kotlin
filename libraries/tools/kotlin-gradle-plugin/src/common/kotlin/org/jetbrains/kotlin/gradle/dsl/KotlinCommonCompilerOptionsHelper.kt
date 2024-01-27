@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinCommonCompilerOptionsHelper {
+object KotlinCommonCompilerOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments,
     ) {
@@ -19,7 +19,7 @@ internal object KotlinCommonCompilerOptionsHelper {
         args.useK2 = from.useK2.get()
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions,
     ) {

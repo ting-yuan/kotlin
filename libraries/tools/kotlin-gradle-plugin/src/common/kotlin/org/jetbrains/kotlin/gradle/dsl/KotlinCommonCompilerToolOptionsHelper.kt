@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinCommonCompilerToolOptionsHelper {
+object KotlinCommonCompilerToolOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerToolOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments,
     ) {
@@ -17,7 +17,7 @@ internal object KotlinCommonCompilerToolOptionsHelper {
         args.freeArgs += from.freeCompilerArgs.get()
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerToolOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerToolOptions,
     ) {

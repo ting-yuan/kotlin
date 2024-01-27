@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-internal object KotlinJvmCompilerOptionsHelper {
+object KotlinJvmCompilerOptionsHelper {
 
-    internal fun fillCompilerArguments(
+    fun fillCompilerArguments(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions,
         args: org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments,
     ) {
@@ -23,7 +23,7 @@ internal object KotlinJvmCompilerOptionsHelper {
         args.allowNoSourceFiles = true
     }
 
-    internal fun syncOptionsAsConvention(
+    fun syncOptionsAsConvention(
         from: org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions,
         into: org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions,
     ) {
